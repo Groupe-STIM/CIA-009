@@ -1,0 +1,141 @@
+*{box-sizing:border-box}
+:root{--bin-left:18px;--bin-top:60px;--bin-size:140px}
+:root{--mc-chat-bg: rgba(3,7,18,0.85)}
+body,html{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;overflow:hidden}
+.desktop-container{position:relative;width:100%;height:100vh;overflow:hidden}
+#desktop{position:relative;width:100%;height:100vh}
+#desktop-bg{position:fixed;inset:0;width:100vw;height:100vh;object-fit:fill;object-position:center center;z-index:0;pointer-events:none;background-color:#000}
+.welcome{position:absolute;left:24px;top:12px;background:rgba(255,255,255,0.85);padding:8px 12px;border-radius:8px;font-weight:600;color:#0f172a}
+.icons-wrapper{--icons-left:18px;--icons-top:80px}
+#icons{--icons-left:calc(var(--bin-left) + (var(--bin-size) / 2) - 76px);position:absolute;left:var(--icons-left);top:var(--bin-top);z-index:2;display:flex;flex-direction:column;gap:14px;margin:0;padding:0}
+.icon{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:80px;padding:4px;background:transparent;border:0;box-shadow:none;transition:transform .16s ease,box-shadow .16s ease;opacity:1}
+.icon img{width:40px;height:40px;pointer-events:none;display:block;margin:4px auto}
+.icon span{display:block;text-align:center;font-size:12px;font-weight:400;color:#ffffff;margin-top:6px;-webkit-font-smoothing:antialiased;/* softened black outline */-webkit-text-stroke:0.10px rgba(0,0,0,0.75);text-shadow:
+	0 1px 1px rgba(0,0,0,0.45),
+	0 0 2px rgba(0,0,0,0.12);
+}
+.icon:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(2,6,23,0.12)}
+.icon:focus{outline:3px solid #2b7cff}
+#app-window{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.98);width:90%;max-width:1000px;height:80%;max-height:720px;background:white;border-radius:12px;box-shadow:0 18px 60px rgba(2,6,23,0.35);display:flex;flex-direction:column;overflow:hidden;visibility:hidden;opacity:0;transition:opacity .18s ease,visibility .18s}
+#app-window[aria-hidden="false"]{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}
+#app-window .titlebar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:linear-gradient(90deg,#f8fafc,#eef2ff);border-bottom:1px solid #e6eef9}
+#app-window .titlebar #app-title{font-weight:700;color:#0f172a}
+#close-window{background:transparent;border:0;padding:6px 8px;border-radius:6px}
+#close-window:hover{background:rgba(0,0,0,0.06)}
+/* Make app content fill available space under the titlebar */
+#app-content{padding:12px;overflow:auto;flex:1;min-height:0}
+/* Minecraft app background */
+.bg-minecraft{background-image: url('../assets/images/apps/Minecraft_background.jpg');background-size:cover;background-position:center bottom;background-repeat:no-repeat;color:#fff;padding:0;position:relative}
+
+/* Fortnite background (uses absolute file path) */
+.bg-fortnite{background-image: url('../assets/images/apps/fortnite_background.jpg');background-size:cover;background-position:center bottom;background-repeat:no-repeat;color:#fff;padding:0;position:relative}
+
+/* Roblox background */
+.bg-roblox{background-image: url('../assets/images/apps/Roblox_background.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;color:#fff;padding:0;position:relative}
+
+/* Discord background */
+.bg-discord{background-image: url('../assets/images/apps/Discord_background_image.png');background-size:cover;background-position:left center;background-repeat:no-repeat;color:#fff;padding:0;position:relative}
+.bg-discord--rewards{background-image:url('../assets/images/apps/Roblox_message_auto.png')}
+.bg-discord--private-message{background-image:url('../assets/images/apps/Discord_message_privee.png')}
+
+/* Reddit background */
+.bg-reddit{background-image:url('../assets/images/apps/Reddit_background_image.png');background-size:cover;background-position:center center;background-repeat:no-repeat;color:#fff;padding:0;position:relative;overflow:hidden}
+/* Outlook background */
+.bg-outlook{background-image:url('../assets/images/apps/Outlook_Background.png');background-size:cover;background-position:left top;background-repeat:no-repeat;color:#fff;padding:0;position:relative;overflow:hidden}
+.discord-hotspot{position:absolute;z-index:2;border:0;background:transparent;cursor:pointer;padding:0}
+.discord-hotspot:focus-visible{outline:3px solid #60a5fa;outline-offset:-3px}
+.discord-flag-source,.discord-trash-target,.discord-draggable-flag{position:absolute;z-index:3;border:0;background:transparent;cursor:pointer;font-size:28px;line-height:1;padding:4px}
+.discord-flag-source{filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+.discord-flag-source:focus-visible,.discord-trash-target:focus-visible,.discord-draggable-flag:focus-visible{outline:3px solid #60a5fa;border-radius:4px}
+.discord-draggable-flag{touch-action:none;user-select:none}
+.discord-phishing-target{position:absolute;z-index:1;background:transparent;pointer-events:none}
+.discord-report-button{position:absolute;z-index:3;width:170px;height:72px;padding:8px;border:0;border-radius:14px;background:#16a34a;color:#fff;cursor:pointer;font:700 12px/1.2 Segoe UI,Arial,sans-serif;text-align:center;text-transform:uppercase;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.discord-report-button:hover{background:#15803d}
+.discord-report-button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+.reddit-report-button{position:absolute;z-index:3;width:88px;height:56px;padding:6px;border:0;border-radius:12px;background:#16a34a;color:#fff;cursor:pointer;font:700 12px/1.2 Segoe UI,Arial,sans-serif;text-align:center;text-transform:uppercase;white-space:normal;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.reddit-report-button:hover{background:#15803d}
+.reddit-report-button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+
+/* Outlook flag tools: red flag + trash on one row, green "Envoyer" below.
+   Positioned by JS (absolute, right side); kept relative here so flex layout works. */
+.outlook-flag-source,.outlook-trash-target{position:relative;z-index:3;border:0;background:transparent;cursor:pointer;font-size:30px;line-height:1;padding:6px}
+.outlook-flag-source{filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+.outlook-flag-source:focus-visible,.outlook-trash-target:focus-visible{outline:3px solid #60a5fa;border-radius:4px}
+.outlook-report-button{position:relative;z-index:3;min-width:104px;padding:10px 16px;border:0;border-radius:12px;background:#16a34a;color:#fff;cursor:pointer;font:700 14px/1.2 Segoe UI,Arial,sans-serif;text-align:center;text-transform:uppercase;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.outlook-report-button:hover{background:#15803d}
+.outlook-report-button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+
+/* Ensure background fills the content area */
+.bg-minecraft,.bg-discord,.bg-roblox,.bg-reddit{width:100%;height:100%}
+
+/* Full-bleed image apps (e.g. Reddit) must not scroll. The overlaid tools
+   (green button, red flag, trash) and phishing targets are absolutely
+   positioned inside #app-content; with the default `overflow:auto` they
+   would scroll with the content. This id+class rule outranks #app-content. */
+#app-content.bg-reddit{overflow:hidden;padding:0}
+#app-content.bg-outlook{overflow:hidden;padding:0}
+
+/* Minecraft-style chat box overlay */
+.mc-chat{position:absolute;left:16px;right:auto;bottom:16px;width:360px;max-height:60%;overflow:auto;background:var(--mc-chat-bg);background-image:none;backdrop-filter:none;border-radius:8px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,0.6);color:#e6f0ff;font-family:Segoe UI,Arial,Helvetica,sans-serif;transition:transform .22s ease,left .22s ease,bottom .22s ease,width .22s ease,height .22s ease;transform-origin:center}
+.mc-message{display:block;margin-bottom:8px;font-size:13px;line-height:1.2;word-break:break-word;padding:6px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);box-shadow:0 4px 12px rgba(0,0,0,0.25)}
+.mc-message .user{display:inline-block;font-weight:700;color:#fff;margin-right:8px}
+.mc-message .text{display:inline;color:#e6f0ff}
+
+/* Structure for left/right columns inside each message */
+.mc-left{display:inline-block;vertical-align:top}
+.mc-right{display:none;vertical-align:top}
+.mc-right .mc-ask{font-weight:700;color:#fff;margin-bottom:8px;text-transform:uppercase}
+.mc-right .mc-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.mc-right label{display:flex;align-items:center;gap:8px;background:transparent;border-radius:6px;padding:6px 8px;color:#fff;cursor:pointer;justify-content:flex-start}
+.mc-right input[type="radio"]{width:18px;height:18px;margin:0 8px 0 0;vertical-align:middle;-webkit-appearance:auto;appearance:auto}
+.mc-right .mc-emoji{font-size:20px;line-height:1;display:inline-block;min-width:22px;text-align:center}
+.mc-right .mc-label{color:#ffffff;margin-left:8px}
+.mc-message .text a{color:#7dd3fc;text-decoration:underline}
+.mc-chat::-webkit-scrollbar{width:10px}
+.mc-chat::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border-radius:10px}
+
+/* Expanded state: center and grow */
+.mc-chat--expanded{left:50% !important;top:50% !important;right:auto;bottom:auto !important;transform:translate(-50%,-50%) scale(1);width:92% !important;max-height:88% !important;z-index:70;padding:24px;overflow:auto;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;background:var(--mc-chat-bg);background-image:none;backdrop-filter:none}
+
+/* Larger text when expanded to occupy most of the app space */
+.mc-chat--expanded .mc-message{font-size:28px;margin-bottom:18px;line-height:1.05;display:flex;align-items:center;justify-content:space-between;padding:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);box-shadow:0 6px 22px rgba(0,0,0,0.35)}
+.mc-chat--expanded .mc-message .user{font-size:28px;margin-right:12px}
+.mc-chat--expanded .mc-message .text{font-size:28px}
+.mc-chat--expanded .mc-message .text a{color:#7dd3fc;text-decoration:underline}
+.mc-chat--expanded .mc-left{flex:1;padding-right:18px}
+.mc-chat--expanded .mc-right{display:flex;flex-direction:column;align-items:flex-start;min-width:220px}
+.mc-chat--expanded .mc-right .mc-ask{font-size:16px}
+.mc-chat--expanded .mc-right label{font-size:22px;color:#ffffff;width:100%}
+/* Color only the emoji, keep label text white */
+.mc-chat--expanded .mc-right .mc-yes .mc-emoji{color:#10b981}
+.mc-chat--expanded .mc-right .mc-no .mc-emoji{color:#ef4444}
+/* Centered blue "Envoyer" button at the bottom of the expanded chat */
+.mc-send-btn{display:none;align-self:center;margin:18px auto 8px;padding:12px 30px;border:0;border-radius:10px;background:#2b7cff;color:#fff;font:700 16px/1 Segoe UI,Arial,sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.mc-chat--expanded .mc-send-btn{display:block}
+.mc-send-btn:hover{background:#1f6ae0}
+.mc-send-btn:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+
+/* Link alert modal inside the app window */
+.link-alert-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:9999}
+.link-alert{background:#fff;color:#0f172a;padding:16px;border-radius:10px;max-width:520px;box-shadow:0 14px 40px rgba(2,6,23,0.45);font-size:15px}
+.link-alert-overlay #discord-success-title~.body img{max-width:100%;max-height:30vh;object-fit:contain}
+#discord-success-overlay .link-alert{max-height:calc(80vh - 48px);overflow-y:auto}
+.link-alert-overlay #reddit-success-title~.body img{max-width:100%;max-height:30vh;object-fit:contain}
+#reddit-success-overlay .link-alert{max-height:calc(80vh - 48px);overflow-y:auto}
+#outlook-success-overlay .link-alert{max-height:calc(80vh - 48px);overflow-y:auto}
+.link-alert .title{font-weight:800;margin-bottom:8px}
+.link-alert p{margin:6px 0}
+.link-alert .controls{display:flex;justify-content:flex-end;margin-top:12px}
+
+.chat-feed{display:flex;flex-direction:column;gap:10px}
+.message{padding:12px;border-radius:10px;background:#fff;border:1px solid #e6eef9;display:flex;gap:12px;align-items:flex-start}
+.message .meta{font-weight:700;color:#0f172a}
+.message.phishing{border-color:#ffdddd;background:#fff2f2}
+.controls{display:flex;gap:10px;margin-top:14px}
+.btn{padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
+.btn.primary{background:#2b7cff;color:#fff;font-weight:700}
+.flag{margin-left:auto;border:1px dashed #cbd5e1;padding:6px;border-radius:6px}
+.outlook-email{font-family:Georgia,serif;background:#fff;padding:14px;border-radius:8px;border:1px solid #e6eef9}
+.suspect{background:#fff8e6;border:2px solid #ffb84d;padding:8px}
+.help{font-size:16px;color:#334155;margin-bottom:10px}
+@media (max-width:800px){#icons{left:12px;top:72px;grid-template-columns:repeat(2,104px)}.icon{width:104px;height:84px}.icon img{width:44px;height:44px}#app-window{width:96%;height:86%}}
