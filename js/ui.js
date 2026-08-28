@@ -233,7 +233,7 @@ function showChatAllGoodAlert(gameName, messagesArr){
   const phishing = (messagesArr || []).filter(m => m.phishing);
   let explanation = '';
   if(phishing.length){
-    explanation = '<p>Voici les messages qui étaient de l\'hameçonnage :</p><ul style="margin:6px 0;padding-left:20px">';
+    explanation = '<p>Voici le(s) message(s) de(s) utilisateur(s) qui étaient de l\'hameçonnage :</p><ul style="margin:6px 0;padding-left:20px">';
     phishing.forEach(m => {
       const reason = m.href
         ? `Il partageait un lien vers un site web non officiel (${escapeHtml(m.hrefText || m.href)}) dans le but de voler vos informations.`
