@@ -1,4 +1,4 @@
-/* Minimal UI helpers */
+/* Application windows and exercise feedback. */
 function openAppWindow(title, htmlContent){
   const win = document.getElementById('app-window');
   const content = document.getElementById('app-content');
@@ -16,17 +16,74 @@ function openAppWindow(title, htmlContent){
   win.setAttribute('aria-hidden','false');
   content.focus();
 }
-function showLinkAlert(){
-  // remove existing if present
-  closeLinkAlert();
-  const win = document.getElementById('app-window');
+function showMinecraftExplanation(kind){
+  const clues = {
+    coins: [
+      'Une promesse de 5 000 Minecoins gratuits, trop belle pour être vraie.',
+      'Une demande de connexion avec votre compte Microsoft pour recevoir un cadeau.',
+      'Une adresse non officielle : minecoins-cadeau.net n’est pas minecraft.net. Cette offre cherche à récupérer vos identifiants sur une fausse page de connexion.'
+    ],
+    ban: [
+      'Une menace de bannissement définitif qui fait peur.',
+      'Un délai de 30 minutes qui crée un sentiment d’urgence et pousse à agir sans réfléchir.',
+      'Une adresse non officielle : minecraft-verification.net tente d’imiter le site officiel minecraft.net.'
+    ],
+    friend: [
+      'Une invitation amicale qui cherche à gagner votre confiance.',
+      'Une promesse de récompenses pour vous attirer sur un serveur.',
+      'Une demande de connexion Microsoft sur minecraft-serveur-secret.com, une adresse non officielle. La présence du mot « minecraft » dans une adresse ne garantit pas qu’elle est officielle.'
+    ],
+    skin: [
+      'Une offre trop belle pour être vraie : un skin ultra rare gratuit.',
+      'Une limite de 24 heures qui crée un sentiment d’urgence.',
+      'Une demande d’identifiants Microsoft sur une adresse non officielle : www.minecraft.skins.net appartient au domaine skins.net, et non à minecraft.net.'
+    ],
+    security: [
+      'Un message qui fait peur en évoquant une connexion suspecte.',
+      'Une demande de vérification immédiate du mot de passe qui crée un sentiment d’urgence.',
+      'Une adresse trompeuse : account.microsoft.com.protection-minecraft.net appartient au domaine protection-minecraft.net, et non à microsoft.com.'
+    ]
+  };
+  if(kind !== 'official' && !clues[kind]) return;
+  const existing = document.getElementById('minecraft-explanation-alert');
+  if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
-  overlay.id = 'link-alert-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true"><div class="title">Ceci est un lien d'hameçonnage</div><div class="body"><p>Pour la vente ou concours de jetons virtuels, vous serez toujours demandé de passer par les sites web officiel.</p><p>Un serveur Discord n'est pas un site web officiel, mais un forum de discussion en ligne.</p></div><div class="controls"><button class="btn primary" id="close-link-alert">Fermer</button></div></div>`;
-  win.appendChild(overlay);
-  document.getElementById('close-link-alert').addEventListener('click', closeLinkAlert);
+  overlay.id = 'minecraft-explanation-alert';
+  const title = kind === 'official' ? 'Ceci est un message légitime' : "Ceci est de l'hameçonnage";
+  const body = kind === 'official'
+    ? '<p>Ce message partage un lien vers <strong>www.minecraft.net</strong>, le site officiel de Minecraft. Il ne demande ni identifiants ni mot de passe et ne promet aucune récompense en échange d’une connexion.</p>'
+    : `<p>Plusieurs indices nous indiquent qu'il s'agit d'hameçonnage :</p><ul>${clues[kind].map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<strong>${url}</strong>`)}</li>`).join('')}</ul>`;
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="minecraft-explanation-title"><div class="title" id="minecraft-explanation-title">${title}</div><div class="body">${body}<p>Le site officiel de Minecraft est <strong>minecraft.net</strong>. Comme Minecraft appartient à Microsoft, une autre adresse officielle est <strong>microsoft.com</strong>.</p></div><div class="controls"><button class="btn primary" id="close-minecraft-explanation">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  document.getElementById('close-minecraft-explanation').addEventListener('click', () => overlay.remove());
 }
+
+function showDiscordCommunityResult(community, success){
+  const existing = document.getElementById('discord-community-result');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'link-alert-overlay';
+  overlay.id = 'discord-community-result';
+  const title = success ? 'Bravo !' : 'Certains drapeaux sont à revoir';
+  const count = community.messages.filter(message => message.phishing).length;
+  const detected = count === 1 ? 'le message d’hameçonnage' : 'les messages d’hameçonnage';
+  const hint = count === 1 ? '1 seul message est de l’hameçonnage' : `${count} messages sont de l’hameçonnage`;
+  const renderClues = clues => `<ul>${clues.map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<strong>${url}</strong>`)}</li>`).join('')}</ul>`;
+  const explanation = community.explanations
+    ? community.explanations.map(item => `<section><h3>${escapeHtml(item.title)}</h3>${renderClues(item.clues)}</section>`).join('')
+    : renderClues(community.clues);
+  const body = success
+    ? `<p>Vous avez correctement identifié ${detected} de la communauté ${escapeHtml(community.name)}.</p>${explanation}`
+    : `<p>Placez un drapeau sur chaque message suspect et retirez ceux placés sur les messages légitimes, puis réessayez.</p><p><strong>Indice :</strong> ${hint} !</p>`;
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="discord-community-result-title"><div class="title" id="discord-community-result-title">${title}</div><div class="body">${body}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  const close = overlay.querySelector('button');
+  const previousFocus = document.activeElement;
+  close.addEventListener('click', () => { overlay.remove(); previousFocus.focus(); });
+  close.focus();
+}
+
 function showDiscordInstructions(){
   const existing = document.getElementById('discord-instructions-overlay');
   if(existing) existing.remove();
@@ -39,85 +96,6 @@ function showDiscordInstructions(){
   document.getElementById('close-discord-instructions').addEventListener('click', () => overlay.remove());
 }
 
-function showDiscordSuccessAlert(){
-  const existing = document.getElementById('discord-success-overlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'link-alert-overlay';
-  overlay.id = 'discord-success-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="discord-success-title"><div class="title" id="discord-success-title">Tentative d'hameçonnage trouver !</div><div class="body"><p>Bravo, vous avez bien identifié la tentative d'hameçonnage.</p><p>En aucun cas, un modérateur Roblox peut demander de valider un compte.</p><p>Ceci est un cas classique d'hameçonnage menant vers une page web pouvant être identique à la page de connexion Roblox :</p><div style="margin-top:12px;text-align:center"><img src="assets/images/apps/Login_Roblox.png" alt="Exemple de page de connexion Roblox frauduleuse" style="max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(0,0,0,0.08)"></div><p>Pour repérer qu'il s'agit d'une tentative d'hameçonnage, il faut regarder attentivement le lien vers la page web.</p></div><div class="controls"><button class="btn primary" id="close-discord-success">Continuer</button></div></div>`;
-  document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-discord-success').addEventListener('click', () => overlay.remove());
-  return;
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="discord-success-title"><div class="title" id="discord-success-title">Tentative d'hameçonnage trouver !</div><div class="body"><p>Bravo, vous avez bien identifié la tentative d'hameçonnage.</p><p>En aucun cas, un modérateur Roblox peut demander de valider un compte.</p><p>Ceci est un cas classique d'hameçonnage menant vers une page web pour voler un compte :</p><div style="margin-top:12px;text-align:center"><img src="assets/images/apps/robux_gratuit.png" alt="Exemple de page frauduleuse Robux" style="max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(0,0,0,0.08)"></div></div><div class="controls"><button class="btn primary" id="close-discord-success">Continuer</button></div></div>`;
-  document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-discord-success').addEventListener('click', () => overlay.remove());
-}
-
-function showDiscordRewardsSuccessAlert(correctCount){
-  const existing = document.getElementById('discord-success-overlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'link-alert-overlay';
-  overlay.id = 'discord-success-overlay';
-  if(correctCount === 0){
-    overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="discord-success-title"><div class="title" id="discord-success-title">Aucun message d'hameçonnage?</div><div class="body"><p>Vous n'avez trouvé aucun message d'hameçonnage ? Il y en a plusieurs, essayer à nouveau !</p></div><div class="controls"><button class="btn primary" id="close-discord-success">Continuer</button></div></div>`;
-    document.getElementById('app-window').appendChild(overlay);
-    document.getElementById('close-discord-success').addEventListener('click', () => overlay.remove());
-    return;
-  }
-  const message = correctCount === 4
-    ? `<p>Bravo, vous avez trouvé tous les messages d'hameçonnage sur la page !</p><p>Il s'agit d'un message de récompense automatisé pour chaque nouvelle personne rejoignant ce forum Roblox. Celui-ci vous partage un lien pour réclamer votre récompense, mais en réalité il s'agit d'un lien pour voler les informations de votre compte Roblox. Voilà à quoi peut ressembler un tel site web :</p><div style="margin-top:12px;text-align:center"><img src="assets/images/apps/robux_gratuit.png" alt="Exemple de page frauduleuse Robux" style="max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(0,0,0,0.08)"></div>`
-    : `<p>Bravo, vous avez trouvé ${correctCount} message(s) d'hameçonnage sur la page ! Continuer jusqu'à temps que vous les trouver tous.</p>`;
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="discord-success-title"><div class="title" id="discord-success-title">Tentative d'hameçonnage trouver !</div><div class="body">${message}</div><div class="controls"><button class="btn primary" id="close-discord-success">Continuer</button></div></div>`;
-  document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-discord-success').addEventListener('click', () => overlay.remove());
-}
-
-function showRedditInstructions(){
-  const existing = document.getElementById('reddit-instructions-overlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'link-alert-overlay';
-  overlay.id = 'reddit-instructions-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="reddit-instructions-title"><div class="title" id="reddit-instructions-title">Trouver les indices d'hameçonnage sur Reddit</div><div class="body"><p>Identifier les tentatives d'hameçonnage sur cette publication Reddit. Pour ce faire, placer un drapeau rouge sur chaque élément qui doit soulever un doute 🚩</p></div><div class="controls"><button class="btn primary" id="close-reddit-instructions">Commencer</button></div></div>`;
-  document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-reddit-instructions').addEventListener('click', () => overlay.remove());
-}
-
-function showRedditSuccessAlert(correctCount, totalCount){
-  const existing = document.getElementById('reddit-success-overlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'link-alert-overlay';
-  overlay.id = 'reddit-success-overlay';
-
-  let title;
-  let message;
-  if(correctCount === 0){
-    title = `Aucun indice d'hameçonnage?`;
-    message = `<p>Vous n'avez trouvé aucun indice d'hameçonnage ? Il y en a plusieurs, essayer à nouveau !</p>`;
-  } else if(correctCount < totalCount){
-    title = `Indice d'hameçonnage trouver !`;
-    message = `<p>Bravo, vous avez trouvé ${correctCount} indice(s) d'hameçonnage sur la page ! Continuer jusqu'à temps que vous les trouver tous.</p>`;
-  } else {
-    title = `Tous les indices d'hameçonnage trouver !`;
-    message = `<p>Bravo, vous avez trouvé tous les indices d'hameçonnage sur cette publication Reddit !</p>` +
-      `<p>Le premier indice est le titre de la publication, indiquant les mots cadeau et robux pour attirer l'attention sur une offre alléchante.</p>` +
-      `<p>Le deuxième indice est le message qui suit mentionnant le tirage au sort pour courrir la chance de gagner des robux gratuitement.</p>` +
-      `<p>Le troisième indice est le paragraphe qui partage le lien vers la page d'inscription. Cette page web n'est aucunement une page officielle de roblox et désire récupérer des informations associer aux comptes Roblox.</p>` +
-      `<p>Le dernier indice est de vous dirigez vers un serveur Discord non-officiel de Roblox.</p>`;
-  }
-
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="reddit-success-title"><div class="title" id="reddit-success-title">${title}</div><div class="body">${message}</div><div class="controls"><button class="btn primary" id="close-reddit-success">Continuer</button></div></div>`;
-  document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-reddit-success').addEventListener('click', () => overlay.remove());
-}
-
 function showOutlookInstructions(){
   const existing = document.getElementById('outlook-instructions-overlay');
   if(existing) existing.remove();
@@ -125,68 +103,131 @@ function showOutlookInstructions(){
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'outlook-instructions-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="outlook-instructions-title"><div class="title" id="outlook-instructions-title">Trouver les indices d'hameçonnage dans Outlook</div><div class="body"><p>Identifier les tentatives d'hameçonnage dans ce courriel Outlook. Pour ce faire, placer un drapeau rouge sur chaque élément qui doit soulever un doute 🚩</p></div><div class="controls"><button class="btn primary" id="close-outlook-instructions">Commencer</button></div></div>`;
+  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="outlook-instructions-title"><div class="title" id="outlook-instructions-title">Trouver tous les indices d'hameçonnage dans chacun des courriels</div><div class="body"><p>Pour chacun des courriels, repérez les indices d’hameçonnage en faisant glisser un drapeau rouge sur chacun d'entre-eux. Cliquez ensuite sur Valider.</p></div><div class="controls"><button class="btn primary" id="close-outlook-instructions">Commencer</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
   document.getElementById('close-outlook-instructions').addEventListener('click', () => overlay.remove());
 }
 
-function showOutlookSuccessAlert(correctCount, totalCount){
+function showOutlookSuccessAlert(correctCount, totalCount, incorrectFlags = 0, email){
   const existing = document.getElementById('outlook-success-overlay');
   if(existing) existing.remove();
-
+  const success = correctCount === totalCount && incorrectFlags === 0;
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'outlook-success-overlay';
-
-  let title;
-  let message;
-  if(correctCount === 0){
-    title = `Aucun indice d'hameçonnage?`;
-    message = `<p>Vous n'avez trouvé aucun indice d'hameçonnage ? Il y en a plusieurs, essayer à nouveau !</p>`;
-  } else if(correctCount < totalCount){
-    title = `Indice d'hameçonnage trouver !`;
-    message = `<p>Bravo, vous avez trouvé ${correctCount} indice(s) d'hameçonnage dans le courriel ! Continuer jusqu'à temps que vous les trouver tous.</p>`;
-  } else {
-    title = `Tous les indices d'hameçonnage trouver !`;
-    message = `<p>Bravo, vous avez trouvé tous les indices d'hameçonnage dans ce courriel Outlook !</p>` +
-      `<p>Le premier indice est l'objet du courriel, qui pousse à l'action avec un ton urgent.</p>` +
-      `<p>Le deuxième indice est l'expéditeur : l'adresse <strong>no-reply@roblov.com</strong> imite roblox.com mais contient une coquille (roblov).</p>` +
-      `<p>Le troisième indice est le paragraphe mentionnant « Canada/Québec », une tactique pour créer un sentiment de proximité.</p>` +
-      `<p>Le dernier indice est le bouton « Réinitialiser e-mail » et le lien qui suit, qui mènent vers une page non officielle de Roblox.</p>`;
-  }
-
-  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-labelledby="outlook-success-title"><div class="title" id="outlook-success-title">${title}</div><div class="body">${message}</div><div class="controls"><button class="btn primary" id="close-outlook-success">Continuer</button></div></div>`;
+  const title = success ? 'Bravo !' : 'Certains indices sont à revoir';
+  const message = success
+    ? `<p>Vous avez identifié les quatre indices d’hameçonnage.</p><ul>${email.clues.map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net|example|ca|ggmail)\b/gi, url => `<span class="outlook-explanation-url">${url}</span>`)}</li>`).join('')}</ul><p>${email.logo ? 'Un logo officiel peut être copié : sa présence ne prouve pas l’authenticité du courriel.' : 'Un nom familier ne prouve pas l’identité de l’expéditeur. Confirmez la demande avec votre ami par un autre moyen avant de vous connecter.'} La présence d’adresses officielles ne garantit pas non plus que tout le message est légitime. Pour vérifier votre compte, ouvrez vous-même le site officiel plutôt que de suivre le bouton du courriel.</p>`
+    : `<p>Vous avez correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau a été placé incorrectement' : 'drapeaux ont été placés incorrectement'}.</p>` : ''}<p>Examinez l’objet, l’expéditeur, le texte du courriel et l’adresse du bouton, puis ajustez vos drapeaux. Retirez aussi les drapeaux placés en dehors des indices suspects.</p><p><strong>Indice :</strong> quatre éléments suspects sont à identifier.</p>`;
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="outlook-success-title"><div class="title" id="outlook-success-title">${title}</div><div class="body">${message}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
+  const previousFocus = document.activeElement;
   document.getElementById('app-window').appendChild(overlay);
-  document.getElementById('close-outlook-success').addEventListener('click', () => overlay.remove());
+  const close = overlay.querySelector('button');
+  close.addEventListener('click', () => { overlay.remove(); previousFocus.focus(); });
+  close.focus();
 }
 
-function showVbucksAlert(){
-  // remove existing phish alert if present
-  const existing = document.getElementById('phish-alert-overlay');
-  if(existing && existing.parentNode) existing.parentNode.removeChild(existing);
-  const win = document.getElementById('app-window');
+function showFortniteImageAlert(){
+  const existing = document.getElementById('fortnite-image-alert');
+  if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
-  overlay.id = 'phish-alert-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true"><div class="title">Ceci est un lien d'hameçonnage</div><div class="body"><p>Deux indices permettent de ce mettre en garde :</p><ol><li>De la monnaie virtuelle payante (V-Bucks) pouvant être générée gratuitement</li><li>Il s'agit d'un site web non-officiel de Fortnite</li></ol><p>Voilà un exemple de page web malicieuse. Après avoir sélectionné le nombre de V-Bucks désiré, le site web demande l'identifiant de votre compte et mot de passe.</p><div style="margin-top:12px;text-align:center"><img src="assets/images/apps/Vbuck-gen.png" alt="Exemple de générateur de V-Bucks" style="max-width:100%;height:auto;border-radius:6px;border:1px solid rgba(0,0,0,0.08)"></div></div><div class="controls"><button class="btn primary" id="close-phish-alert">Fermer</button></div></div>`;
-  win.appendChild(overlay);
-  document.getElementById('close-phish-alert').addEventListener('click', ()=>{
-    const el = document.getElementById('phish-alert-overlay'); if(el && el.parentNode) el.parentNode.removeChild(el);
-  });
+  overlay.id = 'fortnite-image-alert';
+  overlay.innerHTML = `<div class="link-alert" role="dialog" aria-modal="true" aria-label="Exemple de page frauduleuse V-Bucks"><img src="assets/images/apps/Vbuck-gen.png" alt="Exemple de générateur frauduleux de V-Bucks" style="max-width:100%;max-height:60vh;object-fit:contain"><div class="controls"><button class="btn primary" id="close-fortnite-image">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  document.getElementById('close-fortnite-image').addEventListener('click', () => overlay.remove());
 }
-function showRobloxAlert(){
+
+function showFortniteLegitAlert(){
+  const existing = document.getElementById('fortnite-explanation-alert');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'link-alert-overlay';
+  overlay.id = 'fortnite-explanation-alert';
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="fortnite-explanation-title"><div class="title" id="fortnite-explanation-title">Ceci est un message légitime</div><div class="body"><p>Ce message partage un lien vers <strong>www.fortnite.com</strong>, le site officiel de Fortnite. Il ne demande ni identifiants ni mot de passe et ne promet aucune récompense en échange d’une connexion.</p></div><div class="controls"><button class="btn primary" id="close-fortnite-explanation">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  document.getElementById('close-fortnite-explanation').addEventListener('click', () => overlay.remove());
+}
+
+function showFortnitePhishingExplanation(kind){
+  const clues = {
+    vbucks: [
+      'Une promesse de 5 000 V-Bucks gratuits, trop belle pour être vraie.',
+      'Une demande de connexion pour recevoir une récompense.',
+      'Une adresse non officielle : vbucks-cadeau.net n’est ni fortnite.com ni epicgames.com, les deux adresses officielles. Cette offre cherche à vous attirer vers une fausse page de connexion pour voler votre compte.'
+    ],
+    ban: [
+      'Une menace de bannissement définitif qui fait peur.',
+      'Un délai de 30 minutes qui crée un sentiment d’urgence et pousse à agir sans réfléchir.',
+      'Une adresse trompeuse : epicgames.com.verification-compte.net appartient au domaine verification-compte.net, et non à epicgames.com. Les deux adresses officielles sont fortnite.com et epicgames.com.'
+    ],
+    friend: [
+      'Une invitation amicale qui cherche à gagner votre confiance.',
+      'Une promesse de prix pour vous inciter à rejoindre un tournoi.',
+      'Une demande de connexion sur fortnite-tournoi-prive.com, une adresse non officielle. La présence du mot « fortnite » dans une adresse ne garantit pas qu’elle est officielle. Les deux adresses officielles sont fortnite.com et epicgames.com.'
+    ],
+    skin: [
+      'Une offre de costume ultra rare gratuit pour attirer votre attention.',
+      'Une limite d’une heure qui crée un sentiment d’urgence.',
+      'Une demande de connexion sur fortnite-costumes-gratuits.net, une adresse non officielle qui cherche à récupérer vos identifiants. Les deux adresses officielles sont fortnite.com et epicgames.com.'
+    ],
+    security: [
+      'Un message qui fait peur en évoquant une connexion suspecte et la perte de vos objets.',
+      'Une demande de vérification immédiate du mot de passe qui crée un sentiment d’urgence.',
+      'Une adresse trompeuse : security.epicgames.com.protection-joueur.net appartient au domaine protection-joueur.net, et non à epicgames.com. Les deux adresses officielles sont fortnite.com et epicgames.com.'
+    ]
+  };
+  if(!clues[kind]) return;
+  const existing = document.getElementById('fortnite-explanation-alert');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'link-alert-overlay';
+  overlay.id = 'fortnite-explanation-alert';
+  const items = clues[kind].map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<strong>${url}</strong>`)}</li>`).join('');
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="fortnite-explanation-title"><div class="title" id="fortnite-explanation-title">Ceci est de l'hameçonnage</div><div class="body"><p>Plusieurs indices nous indiquent qu'il s'agit d'hameçonnage :</p><ul>${items}</ul></div><div class="controls"><button class="btn primary" id="close-fortnite-explanation">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  document.getElementById('close-fortnite-explanation').addEventListener('click', () => overlay.remove());
+}
+
+function showRobloxPhishingExplanation(kind){
+  const clues = {
+    robux: [
+      'Une promesse de 5 000 Robux gratuits, trop belle pour être vraie.',
+      'Une demande de connexion pour récupérer un cadeau.',
+      'Une adresse non officielle : robux-gratuits.net n’est pas le site officiel roblox.com. Cette offre sert à vous attirer vers une fausse page de connexion pour voler votre compte.'
+    ],
+    friend: [
+      'Une invitation amicale qui cherche à gagner votre confiance.',
+      'Une demande de connexion sur un autre site pour rejoindre un jeu.',
+      'Une adresse non officielle : roblox-jeu-secret.net imite Roblox. La présence du mot « roblox » dans une adresse ne garantit pas qu’elle est officielle.'
+    ],
+    security: [
+      'Un message qui fait peur en évoquant un pirate et le vol de vos Robux.',
+      'Une demande de vérification immédiate de votre mot de passe qui crée un sentiment d’urgence.',
+      'Une adresse trompeuse : security.roblox.com.protection-compte.net appartient au domaine protection-compte.net, et non à roblox.com.'
+    ],
+    ban: [
+      'Une menace de suppression définitive du compte qui fait peur.',
+      'Un délai de 30 minutes qui crée un sentiment d’urgence et pousse à agir sans réfléchir.',
+      'Une adresse trompeuse : roblox.com.verification-urgence.com appartient au domaine verification-urgence.com, et non à roblox.com.'
+    ],
+    item: [
+      'Une offre d’objet ultra rare gratuit pour attirer votre attention.',
+      'Une limite de 24 heures qui crée un sentiment d’urgence.',
+      'Une demande de connexion sur roblox-objets-rares.com, une adresse non officielle qui cherche à récupérer vos identifiants.'
+    ]
+  };
+  if(!clues[kind]) return;
   const existing = document.getElementById('roblox-phish-alert');
-  if(existing && existing.parentNode) existing.parentNode.removeChild(existing);
-  const win = document.getElementById('app-window');
+  if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'roblox-phish-alert';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true"><div class="title">Ceci est un lien d'hameçonnage</div><div class="body"><p>Deux indices permettent de ce mettre en garde :</p><ol><li>Une demande de tester un jeu personnel.</li><li>Un site web non-officiel.</li></ol><p>Dans ce contexte, pour valider qu'il s'agit d'un jeu officiel Roblox, le lien doit vous dirigez vers roblox.com</p></div><div class="controls"><button class="btn primary" id="close-roblox-alert">Fermer</button></div></div>`;
-  win.appendChild(overlay);
-  document.getElementById('close-roblox-alert').addEventListener('click', ()=>{
-    const el = document.getElementById('roblox-phish-alert'); if(el && el.parentNode) el.parentNode.removeChild(el);
-  });
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="roblox-phish-title"><div class="title" id="roblox-phish-title">Ceci est de l'hameçonnage</div><div class="body"><p>Plusieurs indices nous indiquent qu'il s'agit d'hameçonnage :</p><ul>${clues[kind].map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<strong>${url}</strong>`)}</li>`).join('')}</ul></div><div class="controls"><button class="btn primary" id="close-roblox-alert">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  document.getElementById('close-roblox-alert').addEventListener('click', () => overlay.remove());
 }
+
 function showRobloxLegitAlert(){
   const existing = document.getElementById('roblox-legit-alert');
   if(existing && existing.parentNode) existing.parentNode.removeChild(existing);
@@ -194,7 +235,7 @@ function showRobloxLegitAlert(){
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'roblox-legit-alert';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true"><div class="title">Ceci est un message légitime</div><div class="body"><p>Il s'agit d'un jeu menant vers un lien officiel de roblox.com</p></div><div class="controls"><button class="btn primary" id="close-roblox-legit">Fermer</button></div></div>`;
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true"><div class="title">Ceci est un message légitime</div><div class="body"><p>Il s'agit d'un jeu menant vers un lien officiel de <strong>roblox.com</strong></p></div><div class="controls"><button class="btn primary" id="close-roblox-legit">Fermer</button></div></div>`;
   win.appendChild(overlay);
   document.getElementById('close-roblox-legit').addEventListener('click', ()=>{
     const el = document.getElementById('roblox-legit-alert'); if(el && el.parentNode) el.parentNode.removeChild(el);
@@ -216,50 +257,40 @@ function showChatNoAnswerAlert(){
   document.getElementById('close-chat-result').addEventListener('click', () => overlay.remove());
 }
 
-function showChatPartialAlert(gameName, good, total){
+function showChatPartialAlert(good, total){
   const existing = document.getElementById('chat-result-overlay');
   if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'chat-result-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="chat-result-title"><div class="title" id="chat-result-title">Résultat de détection d'hameçonnage sur ${escapeHtml(gameName)}</div><div class="body"><p>Bravo ! Vous avez bien identifiés ${good} messages. Continuer jusqu'à toutes bien les identifiés</p></div><div class="controls"><button class="btn primary" id="close-chat-result">Fermer</button></div></div>`;
+  const title = 'Certaines réponses sont à revoir';
+  overlay.classList.add('chat-result');
+  const message = `Vous avez correctement catégorisé <strong>${good} messages sur ${total}</strong>. Relisez les messages et ajustez vos choix avant de réessayer.`;
+  const hint = "<strong>Indice:</strong> 5 messages sont de l'hameçonnage !";
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="chat-result-title"><div class="title" id="chat-result-title">${title}</div><div class="body"><p>${message}</p><p>${hint}</p></div><div class="controls"><button class="btn primary" id="close-chat-result">Fermer</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
   document.getElementById('close-chat-result').addEventListener('click', () => overlay.remove());
 }
 
-function showChatAllGoodAlert(gameName, messagesArr){
+function showChatAllGoodAlert(){
   const existing = document.getElementById('chat-result-overlay');
   if(existing) existing.remove();
-  const phishing = (messagesArr || []).filter(m => m.phishing);
-  let explanation = '';
-  if(phishing.length){
-    explanation = '<p>Voici le(s) message(s) de(s) utilisateur(s) qui étaient de l\'hameçonnage :</p><ul style="margin:6px 0;padding-left:20px">';
-    phishing.forEach(m => {
-      const reason = m.href
-        ? `Il partageait un lien vers un site web non officiel (${escapeHtml(m.hrefText || m.href)}) dans le but de voler vos informations.`
-        : 'Il tentait de vous tromper afin d\'obtenir vos informations personnelles.';
-      explanation += `<li><strong>${escapeHtml(m.user)}</strong> : ${reason}</li>`;
-    });
-    explanation += '</ul>';
-  }
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'chat-result-overlay';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="chat-result-title"><div class="title" id="chat-result-title">Résultat de détection d'hameçonnage sur ${escapeHtml(gameName)}</div><div class="body"><p>Bravo ! Vous avez bien identifiés tous les messages !</p>${explanation}</div><div class="controls"><button class="btn primary" id="close-chat-result">Fermer</button></div></div>`;
+  const resultContent = '<div class="title" id="chat-result-title">Bravo !</div><div class="body"><p>Vous avez catégorisé correctement tous les messages.</p></div>';
+  overlay.classList.add('chat-result');
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="chat-result-title">${resultContent}<div class="controls"><button class="btn primary" id="close-chat-result">Fermer</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
   document.getElementById('close-chat-result').addEventListener('click', () => overlay.remove());
 }
 
-function closeLinkAlert(){
-  const existing = document.getElementById('link-alert-overlay');
-  if(existing && existing.parentNode) existing.parentNode.removeChild(existing);
-}
 function closeAppWindow(){
   const win = document.getElementById('app-window');
   win.setAttribute('aria-hidden','true');
   const content = document.getElementById('app-content');
   // remove any app-specific background classes and inline background overrides
-  content.classList.remove('bg-minecraft','bg-fortnite','bg-roblox','bg-discord','bg-discord--rewards','bg-discord--private-message','bg-reddit');
+  Array.from(content.classList).filter(cls => cls.startsWith('bg-')).forEach(cls => content.classList.remove(cls));
   content.style.backgroundImage = '';
 }
 window.addEventListener('DOMContentLoaded', ()=>{

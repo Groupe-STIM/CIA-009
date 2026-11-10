@@ -1,4 +1,3 @@
-// Clean app logic (moved from app-clean.js)
 async function loadData(){
   // Try to fetch the canonical JSON first
   try{
@@ -13,46 +12,7 @@ async function loadData(){
   }
 
   // Final fallback: empty structure
-  return { games:{}, discord:{}, reddit:{}, outlook:{} };
-}
-
-function makeMessageEl(m){
-  const div = document.createElement('div');
-  div.className = 'message';
-  if(m.phishing) div.classList.add('phishing');
-  div.innerHTML = `<div class="meta">${m.user}</div><div class="body">${m.text.replace(/\n/g,'<br>')}</div><button class="flag" data-id="${m.id}">Marquer</button>`;
-  return div;
-}
-
-function renderChatPreview(app, messages){
-  const preview = document.createElement('div');
-  preview.className = 'chat-preview';
-  preview.innerHTML = `<div class="help">Aperçu du chat — cliquez pour ouvrir et trier les messages</div>`;
-  const feed = document.createElement('div'); feed.className='chat-feed';
-  messages.slice(0,4).forEach(m=>feed.appendChild(makeMessageEl(m)));
-  preview.appendChild(feed);
-  const openBtn = document.createElement('button'); openBtn.className='btn primary'; openBtn.textContent='Ouvrir le chat';
-  openBtn.addEventListener('click', ()=>openChatFull(app,messages));
-  preview.appendChild(openBtn);
-  return preview.outerHTML;
-}
-
-function openChatFull(app, messages){
-  if(app === 'minecraft' || app === 'roblox'){
-    const winTitle = app === 'roblox' ? 'Roblox' : 'Minecraft';
-    openAppWindow(winTitle, `<div></div>`);
-    const content = document.getElementById('app-content');
-    content.classList.add(app === 'roblox' ? 'bg-roblox' : 'bg-minecraft');
-    return;
-  }
-  const html = `<div><div class="help">Trier les messages: cliquez sur un message puis choisissez "Phishing" ou "Normal".</div><div id="full-feed" class="chat-feed"></div><div class="controls"><button id="check-btn" class="btn primary">Vérifier</button><button id="close-btn" class="btn">Fermer</button></div></div>`;
-  openAppWindow(app+' — Chat', html);
-  const feed = document.getElementById('full-feed');
-  messages.forEach(m=> feed.appendChild(makeMessageEl(m)));
-  document.getElementById('close-btn').addEventListener('click', closeAppWindow);
-  document.getElementById('check-btn').addEventListener('click', ()=>{
-    openAppWindow('Résultat', `<div class="help">Vérification terminée.</div><div class="controls"><button class="btn" onclick="closeAppWindow()">Fermer</button></div>`);
-  });
+  return { games:{}, discord:{}, outlook:{} };
 }
 
 // Checks the per-message answers in the expanded chat and shows the matching
@@ -76,32 +36,59 @@ function checkChatAnswers(gameName, messagesArr){
     return;
   }
   if(good === total){
-    if(typeof showChatAllGoodAlert === 'function') showChatAllGoodAlert(gameName, messagesArr);
+    if(['Roblox', 'Fortnite', 'Minecraft'].includes(gameName)) completeGameChat(chat, gameName, messagesArr);
+    if(typeof showChatAllGoodAlert === 'function') showChatAllGoodAlert();
   } else {
-    if(typeof showChatPartialAlert === 'function') showChatPartialAlert(gameName, good, total);
+    if(typeof showChatPartialAlert === 'function') showChatPartialAlert(good, total);
   }
 }
 
-function addDiscordHotspots(content, hotspots){
-  const buttons = hotspots.map(({ name, area, onClick }) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'discord-hotspot';
-    button.setAttribute('aria-label', name);
-    button.style.left = area.left;
-    button.style.top = area.top;
-    button.style.width = area.width;
-    button.style.height = area.height;
-    button.addEventListener('click', () => {
-      buttons.forEach(item => item.remove());
-      onClick();
-    });
-    content.appendChild(button);
-    return button;
+function completeGameChat(chat, gameName, messagesArr){
+  chat.dataset.completed = 'true';
+  chat.querySelectorAll('.mc-message').forEach((message, index) => {
+    const right = message.querySelector('.mc-right');
+    right.replaceChildren();
+    const label = document.createElement('span');
+    label.className = 'mc-result-label';
+    const isPhishing = message.dataset.phishing === '1';
+    const category = isPhishing ? 'Hameçonnage' : 'Normal';
+    const emoji = document.createElement('span');
+    emoji.className = 'mc-emoji';
+    emoji.setAttribute('aria-hidden', 'true');
+    emoji.textContent = isPhishing ? '❌' : '✅';
+    label.append(emoji, document.createTextNode(' ' + category));
+    right.appendChild(label);
+    const data = messagesArr && messagesArr[index];
+    const explanation = gameName === 'Fortnite'
+      ? (data && data.explanation === 'official' ? showFortniteLegitAlert
+        : data && data.explanation ? () => showFortnitePhishingExplanation(data.explanation) : null)
+      : gameName === 'Roblox'
+      ? (data && data.explanation ? () => showRobloxPhishingExplanation(data.explanation)
+        : data && data.id === 26 ? showRobloxLegitAlert : null)
+      : gameName === 'Minecraft' && data && data.explanation
+        ? () => showMinecraftExplanation(data.explanation) : null;
+    if(explanation){
+      const help = document.createElement('button');
+      help.type = 'button';
+      help.className = 'mc-result-help';
+      help.textContent = '?';
+      help.setAttribute('aria-label', `Pourquoi le message ${index + 1} est-il ${category.toLowerCase()} ?`);
+      help.addEventListener('click', explanation);
+      right.appendChild(help);
+    }
   });
+  chat.querySelectorAll('.mc-discord-link').forEach(link => {
+    if(gameName === 'Fortnite' && link.getAttribute('data-real-href') === 'https://vbucks-cadeau.net') return;
+    const text = document.createElement('span');
+    text.className = 'mc-completed-link';
+    text.textContent = link.textContent;
+    link.replaceWith(text);
+  });
+  const sendButton = chat.querySelector('.mc-send-btn');
+  if(sendButton) sendButton.remove();
 }
 
-// Generic flag tools: draggable 🚩 source, 🗑️ trash and "Envoyer" validation button.
+// Generic flag tools: draggable 🚩 source, 🗑️ trash and "Valider" validation button.
 // config: { sourcePos, trashPos, reportPos, reportClass, onSubmit(correctCount, targets) }
 function addFlagTools(content, config){
   if(content.querySelector('.discord-flag-source')) return;
@@ -117,8 +104,8 @@ function addFlagTools(content, config){
   const reportButton = document.createElement('button');
   reportButton.type = 'button';
   reportButton.className = config.reportClass;
-  reportButton.textContent = 'Envoyer';
-  reportButton.setAttribute('aria-label', 'Envoyer');
+  reportButton.textContent = 'Valider';
+  reportButton.setAttribute('aria-label', 'Valider');
   reportButton.addEventListener('click', () => {
     const targets = Array.from(content.querySelectorAll('.discord-phishing-target'));
     if(!targets.length) return;
@@ -141,8 +128,9 @@ function addFlagTools(content, config){
   source.className = 'discord-flag-source';
   source.textContent = '🚩';
   source.setAttribute('aria-label', 'Créer un drapeau rouge à placer');
-  source.title = 'Cliquez pour créer un drapeau, puis faites-le glisser';
-  source.addEventListener('click', () => {
+  source.title = 'Faites glisser le drapeau sur un message';
+  source.style.touchAction = 'none';
+  const createFlag = initialEvent => {
     const flag = document.createElement('span');
     flag.className = 'discord-draggable-flag';
     flag.textContent = '🚩';
@@ -155,7 +143,8 @@ function addFlagTools(content, config){
       top: `${sourceBounds.top - contentBounds.top}px`
     });
 
-    flag.addEventListener('pointerdown', event => {
+    const startDrag = event => {
+      if(event.button !== 0) return;
       event.preventDefault();
       const bounds = content.getBoundingClientRect();
       const moveFlag = moveEvent => {
@@ -166,371 +155,189 @@ function addFlagTools(content, config){
       };
       flag.setPointerCapture(event.pointerId);
       flag.addEventListener('pointermove', moveFlag);
-      flag.addEventListener('pointerup', () => {
+      const cleanup = () => {
         flag.removeEventListener('pointermove', moveFlag);
+        flag.removeEventListener('pointerup', finishDrag);
+        flag.removeEventListener('pointercancel', cancelDrag);
+      };
+      const cancelDrag = () => {
+        cleanup();
+        if(initialEvent) flag.remove();
+      };
+      const finishDrag = () => {
+        cleanup();
         const flagBounds = flag.getBoundingClientRect();
         const trashBounds = trash.getBoundingClientRect();
         const overlapsTrash = flagBounds.left < trashBounds.right && flagBounds.right > trashBounds.left && flagBounds.top < trashBounds.bottom && flagBounds.bottom > trashBounds.top;
         if(overlapsTrash) flag.remove();
-      }, { once: true });
+      };
+      flag.addEventListener('pointerup', finishDrag);
+      flag.addEventListener('pointercancel', cancelDrag);
       moveFlag(event);
-    });
+    };
+    flag.addEventListener('pointerdown', startDrag);
     content.appendChild(flag);
+    if(initialEvent) startDrag(initialEvent);
+  };
+  source.addEventListener('pointerdown', event => {
+    if(event.button === 0) createFlag(event);
+  });
+  source.addEventListener('click', event => {
+    if(event.detail === 0) createFlag();
   });
   content.appendChild(source);
 
-  if(config.imageAnchors){
-    // Positionne les outils par rapport à l'image de fond (mode "cover" centré).
-    // Les outils sont regroupés dans une rangée flexible afin que la distance
-    // entre chaque outil reste identique, peu importe leur taille respective.
-    const { imageWidth, imageHeight, x, y, gap } = config.imageAnchors;
-    const row = document.createElement('div');
-    Object.assign(row.style, {
-      position: 'absolute',
-      zIndex: '3',
-      display: 'flex',
-      alignItems: 'center',
-      gap: `${gap != null ? gap : 24}px`,
-      pointerEvents: 'none',
-      transform: 'translateY(-50%)'
-    });
-    [reportButton, source, trash].forEach(el => {
-      el.style.position = 'relative';
-      el.style.left = '';
-      el.style.top = '';
-      el.style.transform = '';
-      el.style.pointerEvents = 'auto';
-      row.appendChild(el);
-    });
-    content.appendChild(row);
-    const positionTools = () => {
-      const scale = Math.max(content.clientWidth / imageWidth, content.clientHeight / imageHeight);
-      const offsetX = (content.clientWidth - imageWidth * scale) / 2;
-      const offsetY = (content.clientHeight - imageHeight * scale) / 2;
-      row.style.left = `${offsetX + x * scale}px`;
-      row.style.top = `${offsetY + y * scale}px`;
-    };
-    positionTools();
-    new ResizeObserver(positionTools).observe(content);
-  } else {
-    Object.assign(trash.style, config.trashPos);
-    Object.assign(reportButton.style, config.reportPos);
-    Object.assign(source.style, config.sourcePos);
-  }
-}
-
-function addDiscordFlagTools(content){
-  addFlagTools(content, {
-    sourcePos: { left: '6%', top: '70%' },
-    trashPos: { left: '6%', top: '81%' },
-    reportPos: { left: '12%', top: '74%' },
-    reportClass: 'discord-report-button',
-    onSubmit: (correctCount, targets) => {
-      if(targets[0].dataset.targetScreen === 'rewards') showDiscordRewardsSuccessAlert(correctCount);
-      else if(correctCount) showDiscordSuccessAlert();
-    }
-  });
-}
-
-function addRedditFlagTools(content, config){
-  addFlagTools(content, {
-    imageAnchors: {
-      imageWidth: (config && config.width) || 1433,
-      imageHeight: (config && config.height) || 1098,
-      // Rangée placée à droite du bouton « Partager » (bord gauche à x=690),
-      // de gauche à droite : Envoyer, Drapeau, Corbeille — espacement égal (gap).
-      x: 690,
-      y: 921,
-      gap: 26
-    },
-    reportClass: 'reddit-report-button',
-    onSubmit: (correctCount, targets) => showRedditSuccessAlert(correctCount, targets.length)
-  });
-}
-
-function addOutlookFlagTools(content, config){
-  const trash = document.createElement('div');
-  trash.className = 'outlook-trash-target';
-  trash.textContent = '🗑️';
-  trash.setAttribute('role', 'img');
-  trash.setAttribute('aria-label', 'Corbeille : déposez un drapeau ici pour le supprimer');
-  trash.title = 'Déposez un drapeau ici pour le supprimer';
-
-  const reportButton = document.createElement('button');
-  reportButton.type = 'button';
-  reportButton.className = 'outlook-report-button';
-  reportButton.textContent = 'Envoyer';
-  reportButton.setAttribute('aria-label', 'Envoyer');
-  reportButton.addEventListener('click', () => {
-    const targets = Array.from(content.querySelectorAll('.discord-phishing-target'));
-    if(!targets.length) return;
-    const flags = Array.from(content.querySelectorAll('.discord-draggable-flag'));
-    const correctCount = targets.filter(target => {
-      const targetBounds = target.getBoundingClientRect();
-      return flags.some(flag => {
-        const bounds = flag.getBoundingClientRect();
-        const centerX = bounds.left + bounds.width / 2;
-        const centerY = bounds.top + bounds.height / 2;
-        return centerX >= targetBounds.left && centerX <= targetBounds.right && centerY >= targetBounds.top && centerY <= targetBounds.bottom;
-      });
-    }).length;
-    config.onSubmit(correctCount, targets);
-  });
-
-  const source = document.createElement('button');
-  source.type = 'button';
-  source.className = 'outlook-flag-source';
-  source.textContent = '🚩';
-  source.setAttribute('aria-label', 'Créer un drapeau rouge à placer');
-  source.title = 'Cliquez pour créer un drapeau, puis faites-le glisser';
-  source.addEventListener('click', () => {
-    const flag = document.createElement('span');
-    flag.className = 'discord-draggable-flag';
-    flag.textContent = '🚩';
-    flag.setAttribute('role', 'img');
-    flag.setAttribute('aria-label', 'Drapeau rouge déplaçable');
-    const sourceBounds = source.getBoundingClientRect();
-    const contentBounds = content.getBoundingClientRect();
-    Object.assign(flag.style, {
-      left: `${sourceBounds.left - contentBounds.left}px`,
-      top: `${sourceBounds.top - contentBounds.top}px`
-    });
-
-    flag.addEventListener('pointerdown', event => {
-      event.preventDefault();
-      const bounds = content.getBoundingClientRect();
-      const moveFlag = moveEvent => {
-        const x = Math.max(0, Math.min(bounds.width - flag.offsetWidth, moveEvent.clientX - bounds.left - flag.offsetWidth / 2));
-        const y = Math.max(0, Math.min(bounds.height - flag.offsetHeight, moveEvent.clientY - bounds.top - flag.offsetHeight / 2));
-        flag.style.left = `${(x / bounds.width) * 100}%`;
-        flag.style.top = `${(y / bounds.height) * 100}%`;
-      };
-      flag.setPointerCapture(event.pointerId);
-      flag.addEventListener('pointermove', moveFlag);
-      flag.addEventListener('pointerup', () => {
-        flag.removeEventListener('pointermove', moveFlag);
-        const flagBounds = flag.getBoundingClientRect();
-        const trashBounds = trash.getBoundingClientRect();
-        const overlapsTrash = flagBounds.left < trashBounds.right && flagBounds.right > trashBounds.left && flagBounds.top < trashBounds.bottom && flagBounds.bottom > trashBounds.top;
-        if(overlapsTrash) flag.remove();
-      }, { once: true });
-      moveFlag(event);
-    });
-    content.appendChild(flag);
-  });
-
-  // Layout: red flag 🚩 and trash 🗑️ on the same row, separated by a gap G.
-  // The green "Envoyer" button sits below, at the same vertical distance G
-  // from the icons row (so vertical distance == horizontal distance).
-  const G = (config && config.gap) || 64;
-  const col = document.createElement('div');
-  Object.assign(col.style, {
-    position: 'absolute',
-    zIndex: '3',
-    right: '6%',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: `${G}px`,
-    pointerEvents: 'none'
-  });
-  const row = document.createElement('div');
-  Object.assign(row.style, {
-    display: 'flex',
-    alignItems: 'center',
-    gap: `${G}px`,
-    pointerEvents: 'none'
-  });
-  [source, trash].forEach(el => {
-    el.style.pointerEvents = 'auto';
-    row.appendChild(el);
-  });
-  reportButton.style.pointerEvents = 'auto';
-  col.appendChild(row);
-  col.appendChild(reportButton);
-  content.appendChild(col);
-}
-
-function addPhishingTargets(content, imageWidth, imageHeight, boxes, targetScreen){
-  const targets = boxes.map(() => {
-    const target = document.createElement('div');
-    target.className = 'discord-phishing-target';
-    target.dataset.targetScreen = targetScreen;
-    content.appendChild(target);
-    return target;
-  });
-  const positionTargets = () => {
-    const scale = Math.max(content.clientWidth / imageWidth, content.clientHeight / imageHeight);
-    const offsetX = (content.clientWidth - imageWidth * scale) / 2;
-    const offsetY = (content.clientHeight - imageHeight * scale) / 2;
-    targets.forEach((target, index) => {
-      const [x, y, width, height] = boxes[index];
-      Object.assign(target.style, {
-        left: `${offsetX + x * scale}px`, top: `${offsetY + y * scale}px`,
-        width: `${width * scale}px`, height: `${height * scale}px`
-      });
-    });
-  };
-  positionTargets();
-  new ResizeObserver(positionTargets).observe(content);
-}
-
-// Screen-relative variant: boxes are [xPct, yPct, wPct, hPct] expressed as a
-// percentage of the content (screen) dimensions, so the overlays stay pinned
-// to the screen regardless of how the background image is positioned/scaled.
-function addScreenRelativeTargets(content, boxes, targetScreen){
-  const targets = boxes.map(() => {
-    const target = document.createElement('div');
-    target.className = 'discord-phishing-target';
-    target.dataset.targetScreen = targetScreen;
-    content.appendChild(target);
-    return target;
-  });
-  const positionTargets = () => {
-    const W = content.clientWidth, H = content.clientHeight;
-    targets.forEach((target, index) => {
-      const [x, y, w, h] = boxes[index];
-      Object.assign(target.style, {
-        left: `${(x / 100) * W}px`,
-        top: `${(y / 100) * H}px`,
-        width: `${(w / 100) * W}px`,
-        height: `${(h / 100) * H}px`
-      });
-    });
-  };
-  positionTargets();
-  new ResizeObserver(positionTargets).observe(content);
-}
-
-function clearPlacedDiscordFlags(content){
-  content.querySelectorAll('.discord-draggable-flag').forEach(flag => flag.remove());
-}
-
-function showDiscordStart(content){
-  clearPlacedDiscordFlags(content);
-  content.querySelectorAll('.discord-phishing-target').forEach(element => element.remove());
-  content.classList.remove('bg-discord--rewards', 'bg-discord--private-message');
-  content.classList.add('bg-discord');
-  content.style.backgroundImage = '';
-  addDiscordHotspots(content, [
-    {
-      name: 'Ouvrir le salon #récompenses', area: { left: '5%', top: '44%', width: '35%', height: '9%' },
-      onClick: () => showDiscordRewards(content)
-    },
-    {
-      name: 'Ouvrir les messages privés Discord', area: { left: '0', top: '3%', width: '10%', height: '12%' },
-      onClick: () => showDiscordPrivateMessage(content)
-    }
-  ]);
-  addDiscordFlagTools(content);
-}
-
-function showDiscordRewards(content){
-  clearPlacedDiscordFlags(content);
-  content.querySelectorAll('.discord-phishing-target').forEach(element => element.remove());
-  content.classList.remove('bg-discord--private-message');
-  content.classList.add('bg-discord--rewards');
-  content.style.backgroundImage = "url('assets/images/apps/Roblox_message_auto.png')";
-  addPhishingTargets(content, 1903, 1017, [
-    [669, 202, 635, 130],
-    [669, 344, 731, 166],
-    [669, 524, 679, 166],
-    [669, 715, 570, 167]
-  ], 'rewards');
-  addDiscordHotspots(content, [{
-    name: 'Ouvrir le salon #clips-vidéos-et-moments-forts', area: { left: '5%', top: '39%', width: '35%', height: '9%' },
-    onClick: () => showDiscordStart(content)
-  }, {
-    name: 'Ouvrir les messages privés Discord', area: { left: '0', top: '3%', width: '10%', height: '12%' },
-    onClick: () => showDiscordPrivateMessage(content)
-  }]);
-}
-
-function showDiscordPrivateMessage(content){
-  clearPlacedDiscordFlags(content);
-  content.querySelectorAll('.discord-phishing-target').forEach(element => element.remove());
-  content.classList.remove('bg-discord--rewards');
-  content.classList.add('bg-discord--private-message');
-  content.style.backgroundImage = "url('assets/images/apps/Discord_message_privee.png')";
-  const target = document.createElement('div');
-  target.className = 'discord-phishing-target';
-  target.dataset.targetScreen = 'private';
-  target.setAttribute('aria-label', 'Message d’AnonymeGentil à identifier');
-  content.appendChild(target);
-  const positionTarget = () => {
-    const scale = Math.max(content.clientWidth / 1716, content.clientHeight / 916);
-    const offsetY = (content.clientHeight - 916 * scale) / 2;
-    Object.assign(target.style, {
-      left: `${523 * scale}px`, top: `${offsetY + 500 * scale}px`,
-      width: `${735 * scale}px`, height: `${225 * scale}px`
-    });
-  };
-  positionTarget();
-  new ResizeObserver(positionTarget).observe(content);
-  addDiscordHotspots(content, [{
-    name: 'Ouvrir le serveur CéR', area: { left: '0', top: '10%', width: '6%', height: '10%' },
-    onClick: () => showDiscordStart(content)
-  }]);
+  Object.assign(trash.style, config.trashPos);
+  Object.assign(reportButton.style, config.reportPos);
+  Object.assign(source.style, config.sourcePos);
 }
 
 function renderDiscord(data){
   openAppWindow('Discord', '<div></div>');
   const content = document.getElementById('app-content');
-  content.classList.remove('bg-minecraft','bg-fortnite','bg-roblox','bg-discord','bg-discord--rewards','bg-discord--private-message','bg-reddit');
-  showDiscordStart(content);
-  showDiscordInstructions();
-}
-
-function renderReddit(data){
-  openAppWindow('Reddit', '<div></div>');
-  const content = document.getElementById('app-content');
-  content.classList.remove('bg-minecraft','bg-fortnite','bg-roblox','bg-discord','bg-discord--rewards','bg-discord--private-message','bg-reddit');
-  content.classList.add('bg-reddit');
-  content.style.backgroundImage = '';
-
-  // Point-and-click configuration (background image + target zones), with safe defaults
-  const config = (data && data.image && data.boxes) ? data : {
-    image: 'assets/images/apps/Reddit_background_image.png',
-    width: 1433,
-    height: 1098,
-    boxes: [
-      [90, 212, 800, 84],     // Indice 1 : titre « [CADEAU] ROBUX À GAGNER »
-      [92, 338, 1300, 112],   // Indice 2 : les deux premières lignes du message (tirage au sort)
-      [92, 626, 1256, 124],   // Indice 3 : paragraphe avec le lien d'inscription scoplidrop.com
-      [92, 770, 1256, 88]     // Indice 4 : dernier paragraphe avec le lien vers le serveur Discord
-    ]
+  content.classList.add('bg-discord-communities');
+  const communities = data.communities;
+  const views = new Map();
+  const showCommunity = key => {
+    if(!views.has(key)){
+      const community = communities[key];
+      const stage = document.createElement('section');
+      stage.className = 'discord-community-stage';
+      stage.setAttribute('aria-label', `Communauté ${community.name}`);
+      const heading = document.createElement('div');
+      heading.className = 'discord-community-heading';
+      heading.textContent = `Communauté ${community.name}`;
+      stage.appendChild(heading);
+      const select = document.createElement('select');
+      select.className = 'discord-community-select';
+      select.setAttribute('aria-label', 'Changer de communauté');
+      Object.entries(communities).forEach(([value, item]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = `Communauté ${item.name}`;
+        select.appendChild(option);
+      });
+      select.value = key;
+      select.addEventListener('change', () => showCommunity(select.value));
+      stage.appendChild(select);
+      const feed = document.createElement('div');
+      feed.className = 'discord-community-feed';
+      feed.innerHTML = '<h2># général</h2>';
+      community.messages.forEach(message => {
+        const row = document.createElement('article');
+        row.className = 'discord-community-message';
+        const author = document.createElement('strong');
+        author.textContent = message.user;
+        const text = document.createElement('p');
+        text.textContent = message.text;
+        row.append(author, text);
+        if(message.href){
+          const url = document.createElement('span');
+          url.className = 'discord-community-url';
+          url.textContent = message.href;
+          row.appendChild(url);
+        }
+        if(message.phishing){
+          const target = document.createElement('div');
+          target.className = 'discord-phishing-target';
+          Object.assign(target.style, { inset: '0' });
+          row.appendChild(target);
+        }
+        feed.appendChild(row);
+      });
+      stage.appendChild(feed);
+      const channels = document.createElement('div');
+      channels.className = 'discord-community-channels';
+      channels.innerHTML = '<p>Salons textuels</p><strong># général</strong><p>🚩 Faites glisser le drapeau directement sur le message suspect.</p><p>🗑️ Déposez un drapeau dans la corbeille pour le retirer.</p>';
+      stage.appendChild(channels);
+      addFlagTools(stage, {
+        sourcePos: { left: '8%', top: '70%' },
+        trashPos: { left: '17%', top: '70%' },
+        reportPos: { left: '7%', top: '76%' },
+        reportClass: 'discord-report-button',
+        onSubmit: (correctCount, targets) => {
+          const flags = Array.from(stage.querySelectorAll('.discord-draggable-flag'));
+          const allFlagsCorrect = flags.every(flag => {
+            const rect = flag.getBoundingClientRect();
+            return targets.some(target => {
+              const box = target.getBoundingClientRect();
+              const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+              return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+            });
+          });
+          showDiscordCommunityResult(community, correctCount === targets.length && allFlagsCorrect);
+        }
+      });
+      views.set(key, stage);
+    }
+    content.replaceChildren(views.get(key));
+    const select = content.querySelector('select');
+    select.value = key;
+    select.focus();
   };
-  addPhishingTargets(content, config.width || 1433, config.height || 1098, config.boxes, 'reddit');
-  addRedditFlagTools(content, config);
-  showRedditInstructions();
+  showCommunity('roblox');
+  showDiscordInstructions();
 }
 
 function renderOutlook(data){
   openAppWindow('Outlook', '<div></div>');
   const content = document.getElementById('app-content');
-  content.classList.remove('bg-minecraft','bg-fortnite','bg-roblox','bg-discord','bg-discord--rewards','bg-discord--private-message','bg-reddit');
-  content.classList.add('bg-outlook');
-  content.style.backgroundImage = '';
-
-  // Point-and-click configuration (background image + target zones), with safe
-  // defaults. Boxes are [xPct, yPct, wPct, hPct] relative to the screen dimensions.
-  const config = (data && data.image && data.boxes) ? data : {
-    image: 'assets/images/apps/Outlook_Background.png',
-    boxes: [
-      [1.47, 15.11, 26.41, 4.14],   // Indice 1 : objet du courriel
-      [7.13, 25.67, 14.00, 6.63],   // Indice 2 : expéditeur / destinataire
-      [7.13, 41.41, 49.14, 6.63],   // Indice 3 : paragraphe « Canada/Québec »
-      [7.13, 50.52, 49.14, 12.84]   // Indice 4 : « veuillez le réinitialiser via » + bouton
-    ]
+  content.classList.add('bg-outlook-exercise');
+  const emails = data.emails;
+  const views = new Map();
+  const showEmail = index => {
+    if(index < 0 || index >= emails.length) return;
+    if(!views.has(index)) views.set(index, createOutlookEmail(emails[index], index, emails.length, showEmail));
+    content.replaceChildren(views.get(index));
+    content.scrollTop = 0;
   };
-  addScreenRelativeTargets(content, config.boxes, 'outlook');
-  addOutlookFlagTools(content, {
-    gap: 64,
-    onSubmit: (correctCount, targets) => showOutlookSuccessAlert(correctCount, targets.length)
-  });
+  showEmail(0);
   showOutlookInstructions();
+}
+
+function createOutlookEmail(data, index, total, showEmail){
+  const content = document.getElementById('app-content');
+  content.classList.add('bg-outlook-exercise');
+  const stage = document.createElement('section');
+  stage.className = 'outlook-exercise-stage';
+  stage.setAttribute('aria-label', 'Courriel Outlook à analyser');
+  stage.innerHTML = `<header class="outlook-exercise-header"><span>▦ &nbsp; Outlook</span><nav class="outlook-email-navigation" aria-label="Navigation entre les courriels"><span aria-live="polite">${index + 1} / ${total}</span><button type="button" class="outlook-email-previous" aria-label="Courriel précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="outlook-email-next" aria-label="Courriel suivant" ${index === total - 1 ? 'disabled' : ''}>→</button></nav></header><div class="outlook-exercise-toolbar">Supprimer &nbsp; | &nbsp; Archiver &nbsp; | &nbsp; Signaler &nbsp; | &nbsp; Répondre &nbsp; | &nbsp; Transférer</div><h1 class="outlook-clue">${escapeHtml(data.subject)}<span class="discord-phishing-target"></span></h1><div class="outlook-exercise-mail"><div class="outlook-sender-row">${data.logo ? `<img class="outlook-sender-logo" src="${escapeHtml(data.logo)}" alt="${escapeHtml(data.logoAlt)}" width="44" height="44">` : `<span class="outlook-sender-avatar" aria-hidden="true">${escapeHtml(data.initials || data.senderName.charAt(0))}</span>`}<div class="outlook-exercise-sender outlook-clue"><strong>${escapeHtml(data.senderName)}</strong><br>&lt;${escapeHtml(data.sender)}&gt;<div class="discord-phishing-target"></div></div></div><p>À : Vous</p><p>${escapeHtml(data.greeting || 'Bonjour,')}</p><p${data.clueField === 'intro' ? ' class="outlook-clue"' : ''}>${escapeHtml(data.intro).replace(/100 \$/g, '<strong>100 $</strong>')}${data.clueField === 'intro' ? '<span class="discord-phishing-target"></span>' : ''}</p>${data.threat ? `<p class="outlook-clue outlook-exercise-threat">${escapeHtml(data.threat).replace(/\bimmédiatement\b/g, '<strong><u>immédiatement</u></strong>')}${data.actionPrompt ? ` ${escapeHtml(data.actionPrompt)}` : ''}<span class="discord-phishing-target"></span></p>` : ''}${!data.threat && data.actionPrompt ? `<p>${escapeHtml(data.actionPrompt)}</p>` : ''}<div class="outlook-exercise-action outlook-clue"><button type="button" class="outlook-inspect-link" aria-expanded="false" aria-controls="outlook-link-destination">${escapeHtml(data.buttonText)}</button><div class="outlook-link-destination" id="outlook-link-destination" hidden>${escapeHtml(data.href)}</div><span class="discord-phishing-target"></span></div>${data.closing ? `<p>${escapeHtml(data.closing)}</p>` : ''}${data.supportNote ? `<p>${escapeHtml(data.supportNote)}</p>` : ''}${data.officialUrl ? `<p>${data.contact ? `Pour toute question : <span class="outlook-official-url">${escapeHtml(data.contact)}</span><br>Ce message a été généré par ` : escapeHtml(data.officialLabel || 'Support officiel : ')}<span class="outlook-official-url">${escapeHtml(data.officialUrl)}</span>.</p>` : ''}<p>${escapeHtml(data.signature)}</p></div><aside class="outlook-exercise-help">Faites glisser un drapeau sur chaque indice suspect et valider en appuyant sur le bouton.</aside>`;
+  stage.querySelector('.outlook-email-previous').addEventListener('click', () => showEmail(index - 1));
+  stage.querySelector('.outlook-email-next').addEventListener('click', () => showEmail(index + 1));
+  stage.querySelectorAll('.outlook-clue .discord-phishing-target').forEach(target => {
+    Object.assign(target.style, { inset: '0' });
+  });
+  const inspect = stage.querySelector('.outlook-inspect-link');
+  const destination = stage.querySelector('.outlook-link-destination');
+  let hovering = false;
+  const updateDestination = () => {
+    const visible = hovering || inspect.matches(':focus-visible');
+    destination.hidden = !visible;
+    inspect.setAttribute('aria-expanded', String(visible));
+  };
+  inspect.addEventListener('pointerenter', () => { hovering = true; updateDestination(); });
+  inspect.addEventListener('pointerleave', () => { hovering = false; updateDestination(); });
+  inspect.addEventListener('focus', updateDestination);
+  inspect.addEventListener('blur', updateDestination);
+  addFlagTools(stage, {
+    sourcePos: { right: '18%', top: '50%' },
+    trashPos: { right: '7%', top: '50%' },
+    reportPos: { right: '9%', top: '57%' },
+    reportClass: 'discord-report-button',
+    onSubmit: (correctCount, targets) => {
+      const flags = Array.from(stage.querySelectorAll('.discord-draggable-flag'));
+      const incorrectFlags = flags.filter(flag => {
+        const rect = flag.getBoundingClientRect();
+        const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+        return !targets.some(target => {
+          const box = target.getBoundingClientRect();
+          return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+        });
+      }).length;
+      showOutlookSuccessAlert(correctCount, targets.length, incorrectFlags, data);
+    }
+  });
+  return stage;
 }
 
 window.addEventListener('DOMContentLoaded', ()=>{
@@ -544,8 +351,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
         const title = isRoblox ? 'Roblox' : (isFortnite ? 'Fortnite' : 'Minecraft');
         const bgClass = isRoblox ? 'bg-roblox' : (isFortnite ? 'bg-fortnite' : 'bg-minecraft');
 
-      // Load messages from data.games so Minecraft and Fortnite are independent and editable via messages.json
-      const messagesArr = (data && data.games && data.games[app]) ? data.games[app] : [];
+      // Copy the selected game’s fixed message order from messages.json.
+      const messagesArr = (data && data.games && data.games[app]) ? [...data.games[app]] : [];
 
       function buildChatHtml(messagesArr){
         let html = '<div style="position:relative;width:100%;height:100%"><div class="mc-chat" role="log" aria-label="'+title+' chat" tabindex="0">';
@@ -572,7 +379,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
           html += '<label class="mc-no"><input type="radio" name="'+namePrefix+'type-'+idx+'" value="phishing"><span class="mc-emoji">❌</span><span class="mc-label">Hameçonnage</span></label>';
           html += '</div></div>';
         });
-        html += '<button type="button" class="mc-send-btn" id="mc-send-btn">Envoyer</button>';
+        html += '<button type="button" class="mc-send-btn" id="mc-send-btn" disabled>Valider</button>';
         html += '</div></div>';
         return html;
       }
@@ -580,7 +387,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
       const chatHtml = buildChatHtml(messagesArr);
       openAppWindow(title, chatHtml);
       const content = document.getElementById('app-content');
-      content.classList.remove('bg-minecraft','bg-fortnite','bg-roblox','bg-discord','bg-discord--rewards','bg-discord--private-message','bg-reddit');
       content.classList.add(bgClass);
 
       function convertSpansToAnchors(container){
@@ -611,30 +417,15 @@ window.addEventListener('DOMContentLoaded', ()=>{
         chat.addEventListener('click', e=>{
           const a = e.target.closest('a');
           if(a){
-            const href = a.getAttribute('data-real-href') || a.getAttribute('href') || '';
-            if(href.includes('discord.gg')){
+            if(isFortnite && a.getAttribute('data-real-href') === 'https://vbucks-cadeau.net'){
               e.preventDefault();
-              if(typeof showLinkAlert === 'function') showLinkAlert();
+              showFortniteImageAlert();
               return;
             }
-            if(href.includes('freevbucks.lol')){
-              e.preventDefault();
-              if(typeof showVbucksAlert === 'function') showVbucksAlert();
-              return;
-            }
-            if(href.includes('roblox-zombie.net')){
-              e.preventDefault();
-              if(typeof showRobloxAlert === 'function') showRobloxAlert();
-              return;
-            }
-            if(href.includes('roblox.com/tower-of-hell') || href.includes('roblox.com/tower-of-hell/')){
-              e.preventDefault();
-              if(typeof showRobloxLegitAlert === 'function') showRobloxLegitAlert();
-              return;
-            }
+            e.preventDefault();
             return;
           }
-          if(e.target.closest('.mc-right') || e.target.closest('.mc-send-btn')) return;
+          if(e.target.closest('.mc-right') || e.target.closest('.mc-send-btn') || e.target.closest('.mc-completed-link')) return;
           const expanding = !chat.classList.contains('mc-chat--expanded');
           chat.classList.toggle('mc-chat--expanded');
           if(expanding){
@@ -647,10 +438,17 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
       const sendBtn = document.getElementById('mc-send-btn');
       if(sendBtn){
+        if(chat){
+          const updateSendButton = () => {
+            const messages = Array.from(chat.querySelectorAll('.mc-message'));
+            sendBtn.disabled = messages.length === 0 || messages.some(message => !message.querySelector('input[type="radio"]:checked'));
+          };
+          chat.addEventListener('change', updateSendButton);
+          updateSendButton();
+        }
         sendBtn.addEventListener('click', () => checkChatAnswers(title, messagesArr));
       }
     } else if(app==='discord') renderDiscord(data.discord);
-    else if(app==='reddit') renderReddit(data.reddit);
     else if(app==='outlook') renderOutlook(data.outlook);
   }));
 });

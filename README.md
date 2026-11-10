@@ -1,88 +1,54 @@
-# Jeu éducatif — Reconnaître l'hameçonnage
+# Jeu éducatif — Reconnaître l’hameçonnage
 
-## Objectif
+Application éducative en français pour apprendre à reconnaître les offres trompeuses, les expéditeurs imités, les demandes d’identifiants, les téléchargements suspects et les messages qui suscitent l’urgence.
 
-Cette application est un **jeu éducatif** conçu pour sensibiliser les jeunes à la **détection de l'hameçonnage** (phishing). Elle les place dans des situations qui imitent leurs applications et jeux du quotidien, puis les invite à repérer les tentatives de vol d'identifiants ou d'informations personnelles.
+## Démarrage
 
-L'objectif pédagogique est d'apprendre à reconnaître les signes courants d'une attaque :
+Ouvrez `index.html` dans un navigateur. Aucune installation ni connexion Internet n’est nécessaire. Les images et les logos sont stockés localement.
 
-- des **liens vers des sites non officiels** (ex. `freevbucks.lol`, `roblox-zombie.net`, serveurs Discord non officiels) ;
-- de **fausses adresses d'expéditeur** qui imitent une marque (ex. `no-reply@roblov.com` au lieu de `roblox.com`) ;
-- un **sentiment d'urgence** (« votre compte sera verrouillé », « confirmations de sécurité requises ») ;
-- des **promesses trop belles pour être vraies** (V-Bucks, Robux ou jetons gratuits) ;
-- des **tactiques de confiance** (mention d'une région comme « Canada/Québec ») ;
-- des **boutons d'action** qui mènent vers de fausses pages de connexion.
+L’application essaie de charger `data/messages.json`. Si le navigateur bloque ce chargement en `file://`, elle utilise la copie intégrée dans le script `embedded-messages` de `index.html`. Ces deux sources doivent rester identiques.
 
-Chaque exercice se termine par une rétroaction explicative pour comprendre *pourquoi* un élément était suspect.
+## Les cinq applications
 
-## Démarrage rapide
+### Roblox, Fortnite et Minecraft
 
-Ouvrez simplement `index.html` dans un navigateur (double-cliquez le fichier). Aucune installation, aucun serveur et aucune connexion Internet ne sont requis : l'application fonctionne entièrement en local.
+Chaque jeu présente dix messages dans un ordre fixe : cinq légitimes et cinq d’hameçonnage. Un clic sur le clavardage l’agrandit. Classez chaque message comme **Normal** ou **Hameçonnage** ; le bouton **Valider** est activé seulement quand tous les messages ont une réponse.
 
-Si le navigateur bloque le chargement des données en `file://`, l'application utilise automatiquement les données intégrées dans la page (`index.html` > script `embedded-messages`).
+En cas d’erreur, le résultat indique le nombre de bonnes réponses et permet de corriger les choix. Après une réussite, les choix deviennent des statuts **✅ Normal** ou **❌ Hameçonnage**. Les boutons **?** affichent les explications associées aux messages suspects et au message contenant un lien officiel.
 
-## Structure du projet
+Les liens du clavardage ne naviguent pas vers les sites présentés. Seul le lien V-Bucks de Fortnite ouvre une illustration locale de page frauduleuse. `blank.html` reste la destination locale de secours des liens simulés.
+
+### Discord
+
+Le menu **Communauté** permet de passer entre Roblox, Fortnite et Minecraft. Chaque communauté contient quatre messages dans un ordre fixe, dont un message légitime avec un lien officiel. Roblox et Fortnite ont chacun un message d’hameçonnage ; Minecraft en a deux.
+
+Faites glisser directement le drapeau rouge sur les messages suspects. Déposez un drapeau dans la corbeille pour le supprimer. Cliquez sur **Valider** pour obtenir une rétroaction et les explications. Les drapeaux sur les messages légitimes empêchent la réussite. Les drapeaux sont conservés lors du changement de communauté, jusqu’à la fermeture de l’exercice.
+
+### Outlook
+
+Les flèches à droite de la bande bleue permettent de parcourir six faux courriels : Roblox, Microsoft, YouTube, Postes Canada, Google et un ami qui demande des votes pour un concours Minecraft. Les drapeaux sont conservés pendant la navigation, jusqu’à la fermeture de l’exercice.
+
+Chaque courriel comporte quatre zones à analyser : l’objet, l’expéditeur, un passage suspect et le bouton avec son adresse de destination. L’adresse apparaît au-dessus du bouton au survol ou au focus clavier, puis disparaît quand il n’est plus survolé ni ciblé au clavier. Aucun site externe n’est ouvert.
+
+Placez les drapeaux sur les indices, puis cliquez sur **Valider**. En cas d’erreur, le résultat précise le nombre d’indices repérés et, s’il y en a, le nombre de drapeaux mal placés. La réussite exige de couvrir les quatre zones sans signaler d’autres éléments.
+
+Les explications distinguent les domaines officiels des imitations. Elles rappellent que les logos et les liens officiels présents dans un courriel ne prouvent pas son authenticité. Dans le courriel de l’ami, une adresse Gmail légitime ne garantit pas l’identité de l’expéditeur.
+
+## Structure et personnalisation
 
 | Élément | Rôle |
 | --- | --- |
-| `index.html` | Écran principal (bureau Windows avec icônes d'applications) et données intégrées de secours. |
-| `styles/styles.css` | Mise en forme du bureau, des fenêtres d'application et des jeux. |
-| `js/app.js` | Logique des applications (chat, jeux point-and-click, vérification des réponses). |
-| `js/ui.js` | Aides d'interface (fenêtres modales, instructions, alertes de réussite). |
-| `data/messages.json` | Données de démonstration (messages de chat, courriel Outlook, publications Reddit). |
-| `assets/images/` | Arrière-plans, icônes et images des applications. |
+| `index.html` | Bureau, chargement des scripts et copie intégrée des données. |
+| `js/app.js` | Rendu des exercices, navigation, validation et déplacement des drapeaux. |
+| `js/ui.js` | Fenêtres et rétroactions explicatives. |
+| `styles/styles.css` | Présentation des cinq applications. |
+| `data/messages.json` | Messages, communautés Discord et courriels Outlook. |
+| `assets/images/` | Arrière-plans, logos et illustration V-Bucks. |
+| `blank.html` | Page locale de secours pour les liens simulés du clavardage. |
 
-## Les applications (jeux)
+- **Messages des jeux** : modifiez `games`, notamment `user`, `text`, `phishing`, `href`, `hrefText` et le type d’`explanation`. Les textes explicatifs sont dans `js/ui.js`.
+- **Discord** : modifiez `discord.communities`. Les messages définissent les zones à signaler via `phishing`. Les explications sont dans `clues` ou dans des groupes `explanations` associés aux messages.
+- **Outlook** : modifiez les entrées de `outlook.emails` : objet, expéditeur, paragraphes, bouton, URL, signature, logo et quatre explications `clues`. Le champ `clueField: "intro"` place la troisième cible sur l’introduction plutôt que sur le paragraphe `threat`.
+- **Données locales** : répercutez chaque modification de `data/messages.json` dans `embedded-messages` pour conserver le même contenu avec ou sans serveur.
 
-Le bureau propose six icônes, chacune ouvrant un exercice thématique.
-
-### 1. Minecraft, Fortnite et Roblox — Le chat suspect
-
-Un aperçu de conversation s'affiche. En cliquant sur le chat, la **fenêtre de conversation s'agrandit** (mode plein écran). Chaque message comporte deux options :
-
-- ✅ **Normal**
-- ❌ **Hameçonnage**
-
-Une fois tous les messages catégorisés, un **bouton bleu « Envoyer »** apparaît en bas de la conversation. En le cliquant, l'application vérifie les réponses :
-
-- Aucun message catégorisé → *« Aucun message catégorisé — Vous devez catégorisé tous les messages pour savoir lesquels sont normaux et les autres de l'hameçonnage. »*
-- 1 à 7 bonnes réponses → *« Résultat de détection d'hameçonnage sur <Jeu> — Bravo ! Vous avez bien identifiés X messages. Continuer jusqu'à toutes bien les identifiés. »*
-- Toutes les réponses correctes → message de réussite suivi d'une **explication des messages frauduleux** (lien non officiel, vol d'informations, etc.).
-
-### 2. Discord — Repérer les messages piégés
-
-Un salon Discord est simulé. L'utilisateur doit **placer un drapeau rouge 🚩** sur chaque message d'hameçonnage, puis cliquer sur **« Envoyer »** pour valider. Une **corbeille 🗑️** permet de retirer un drapeau mal placé. Des fenêtres d'instructions et de réussite accompagnent l'exercice.
-
-### 3. Reddit — Analyser une publication
-
-Une publication Reddit s'affiche en arrière-plan. Quatre zones suspectes sont détectables (titre, expéditeur, paragraphe avec « Canada/Québec », bouton de réinitialisation). L'utilisateur dépose des **drapeaux rouges** sur les indices, utilise la **corbeille** pour corriger, et valide avec le **bouton vert « Envoyer »** placé sur le côté droit de l'écran. Un récapitulatif explicatif s'affiche en fin de parcours.
-
-### 4. Outlook — Le courriel piégé (jeu point-and-click)
-
-Le courriel « Réinitialisation d'email Roblox » est présenté comme arrière-plan. Quatre zones sont à analyser :
-
-1. **L'objet du courriel** (ton urgent) ;
-2. **L'expéditeur / destinateur** (`no-reply@roblov.com`, une contrefaçon de roblox.com) ;
-3. **Le paragraphe mentionnant « Canada/Québec »** (tactique de confiance) ;
-4. **Le bouton « Réinitialiser e-mail » et son lien** (redirige vers une page non officielle).
-
-Les outils (drapeau rouge 🚩, corbeille 🗑️ sur une même rangée, et le bouton vert **« Envoyer »** en dessous) sont disposés dans la partie droite, vide, de l'image. Comme pour Reddit, on place les drapeaux, on corrige avec la corbeille, et on valide.
-
-## Mécaniques communes
-
-- **Drapeau rouge 🚩** : créé puis déposé par glisser-déposer sur un élément suspect.
-- **Corbeille 🗑️** : déposez un drapeau dessus pour l'effacer.
-- **Bouton vert « Envoyer »** : vérifie les réponses et affiche la rétroaction.
-- **Fenêtres d'instructions et de réussite** : guident et expliquent à chaque étape.
-
-## Personnalisation
-
-- **Modifier le contenu** : éditez `data/messages.json` (ou le bloc `embedded-messages` dans `index.html` si vous travaillez en `file://`). Les messages de chat possèdent un champ `phishing` (`true`/`false`) et, le cas échéant, un `href`/`hrefText` pour les liens.
-- **Changer les arrière-plans** : remplacez les images dans `assets/images/apps/` (par exemple `Outlook_Background.png`, `Reddit_background_image.png`, etc.).
-- **Ajuster les zones cliquables (Overlays)** : dans `data/messages.json` (section `reddit`/`outlook`), les `boxes` définissent la position et la taille des zones à analyser, exprimées en pourcentage de l'écran (`[xPct, yPct, largeurPct, hauteurPct]`).
-
-## Notes techniques
-
-- Application 100 % côté client (HTML, CSS, JavaScript vanilla). Aucune dépendance externe, aucun réseau.
-- Conçue pour fonctionner sur laptop/chromebook et tablette (interface type « bureau »).
-- Les textes et les interfaces sont en **français**.
+L’application utilise HTML, CSS et JavaScript sans dépendance externe. Les interfaces Discord et Outlook peuvent nécessiter un défilement sur les petits écrans.
