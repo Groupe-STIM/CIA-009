@@ -30,8 +30,119 @@
         <img src="assets/images/icons/outlook.png" alt="Outlook"/>
         <span>Outlook</span>
       </button>
+      <button class="icon" data-app="sms" aria-label="SMS">
+        <img src="assets/images/icons/sms.svg" alt="SMS"/>
+        <span>SMS</span>
+      </button>
+    </div>
+    <div class="desktop-learning-tools">
+    <button id="url-guide-button" aria-haspopup="dialog" aria-controls="url-guide-dialog" aria-label="Comprendre les adresses Web">
+      <img src="assets/images/icons/url.svg" alt="" width="44" height="44">
+      <span>Comprendre les adresses Web</span>
+    </button>
+    <button id="official-domains-button" aria-haspopup="dialog" aria-controls="official-domains-dialog" aria-label="Domaines officiels">
+      <img src="assets/images/icons/official-domains.svg" alt="" width="44" height="44">
+      <span>Domaines officiels</span>
+    </button>
+    <button id="url-quiz-button" aria-haspopup="dialog" aria-controls="url-quiz-dialog" aria-label="Quiz sur les adresses Web">
+      <img src="assets/images/icons/url-quiz.svg" alt="" width="44" height="44">
+      <span>Quiz sur les adresses Web</span>
+    </button>
     </div>
   </div>
+
+  <dialog id="url-guide-dialog" aria-labelledby="url-guide-title">
+    <header class="url-guide-header">
+      <div><span class="url-guide-eyebrow">LA BOÎTE À OUTILS</span><h2 id="url-guide-title">Qui se cache derrière une adresse Web ?</h2></div>
+      <button type="button" id="url-guide-close" aria-label="Fermer l’aide sur les URL">✕</button>
+    </header>
+    <div class="url-guide-body">
+      <section aria-labelledby="url-anatomy-title">
+        <h3 id="url-anatomy-title">Anatomie d’une adresse Web</h3>
+        <p>Une adresse Web se lit en trois parties. Voici comment décomposer <code>https://devforum.roblox.com/games?lang=fr</code> :</p>
+        <figure class="url-anatomy-figure">
+          <div class="url-anatomy-diagram url-anatomy-three">
+            <div class="url-anatomy-part url-anatomy-protocol"><span class="url-anatomy-value">https://</span><span class="url-anatomy-label"><b>1</b> https://</span><span class="url-anatomy-detail">Le protocole de connexion</span></div>
+            <div class="url-anatomy-part url-anatomy-host"><span class="url-anatomy-value">devforum.roblox.com</span><span class="url-anatomy-label"><b>2</b> Nom complet du site</span><span class="url-anatomy-detail">Le site auquel tu te connectes</span></div>
+            <div class="url-anatomy-part url-anatomy-page"><span class="url-anatomy-value">/games?lang=fr</span><span class="url-anatomy-label"><b>3</b> Page et/ou option</span><span class="url-anatomy-detail">La page « games », avec l’option « lang=fr »</span></div>
+          </div>
+        </figure>
+        <h4 class="url-anatomy-zoom-title">Zoom sur la deuxième partie (le nom complet du site)</h4>
+        <figure class="url-anatomy-figure">
+          <div class="url-anatomy-diagram url-anatomy-two">
+            <div class="url-anatomy-part url-anatomy-subdomain"><span class="url-anatomy-value">devforum.</span><span class="url-anatomy-label">Sous-domaine</span><span class="url-anatomy-detail">Ici : devforum</span></div>
+            <div class="url-anatomy-part url-anatomy-domain"><span class="url-anatomy-value">roblox.com</span><span class="url-anatomy-label">Domaine principal</span><span class="url-anatomy-detail">Le nom « roblox » + l’extension « .com »</span></div>
+          </div>
+        </figure>
+        <div class="url-domain-focus">
+          <strong class="url-domain-focus-value">roblox.com</strong>
+          <span class="url-domain-focus-label">Domaine principal</span>
+          <p>Le domaine principal est ce qui nous intéresse.</p>
+        </div>
+      </section>
+      <section aria-labelledby="url-reading-title">
+        <h3 id="url-reading-title">Comment repérer facilement le domaine principal</h3>
+        <ul class="url-guide-steps">
+          <li><strong>Repère <code>://</code>.</strong> Commence à lire juste après, par exemple après <code>https://</code>.</li>
+          <li><strong>Trouve le premier <code>/</code>, <code>?</code> ou <code>#</code> qui suit.</strong> Ce qui se trouve avant ce symbole est le nom complet du site. S’il n’y a aucun de ces symboles, pars de la fin.</li>
+          <li><strong>Lis ce nom depuis la droite.</strong> Repère l’extension, comme <code>.com</code> ou <code>.net</code>, et prends le nom juste à sa gauche : ensemble, ils forment le <strong>domaine principal</strong>.</li>
+        </ul>
+        <p class="url-guide-tip">Certaines extensions, comme <strong>co.uk</strong>, comportent plusieurs parties. Le domaine principal comprend cette extension complète et le nom juste avant. En cas de doute, utilise l’analyseur ci-dessous. Si tu vois <code>@</code> ou un numéro de port comme <code>:8080</code>, utilise aussi l’analyseur pour isoler correctement le site.</p>
+        <h4>Exemples : le domaine principal est surligné en bleu</h4>
+        <div class="url-guide-example" aria-label="https://devforum.roblox.com/ : domaine principal roblox.com."><span class="url-protocol">https://</span><span class="url-subdomain">devforum.</span><strong class="url-main-domain">roblox.com</strong><span class="url-path">/</span></div>
+        <div class="url-guide-legend"><span>Domaine principal : <strong>roblox.com</strong>. « devforum » est le sous-domaine.</span></div>
+        <div class="url-guide-example" aria-label="https://login.roblox.com.verification-urgence.com/connexion : domaine principal verification-urgence.com."><span class="url-protocol">https://</span><span class="url-subdomain">login.roblox.com.</span><strong class="url-main-domain">verification-urgence.com</strong><span class="url-path">/connexion</span></div>
+        <div class="url-guide-legend"><span>Domaine principal : <strong>verification-urgence.com</strong>. Le début « login.roblox.com » est un sous-domaine trompeur.</span></div>
+        <div class="url-guide-example" aria-label="https://accounts.google.com?service=youtube : domaine principal google.com."><span class="url-protocol">https://</span><span class="url-subdomain">accounts.</span><strong class="url-main-domain">google.com</strong><span class="url-path">?service=youtube</span></div>
+        <div class="url-guide-legend"><span>Domaine principal : <strong>google.com</strong>. Les options après « ? » ne changent pas le domaine.</span></div>
+        <div class="url-guide-example" aria-label="https://cadeaux.net/roblox.com : domaine principal cadeaux.net."><span class="url-protocol">https://</span><strong class="url-main-domain">cadeaux.net</strong><span class="url-path">/roblox.com</span></div>
+        <div class="url-guide-legend"><span>Domaine principal : <strong>cadeaux.net</strong>. Ici, « roblox.com » est un nom de page trompeur.</span></div>
+      </section>
+      <section class="url-analyzer" aria-labelledby="url-analyzer-title">
+        <h3 id="url-analyzer-title">À toi de jouer</h3>
+        <p>Colle ou écris une adresse pour repérer son domaine. L’analyse se fait sur cet appareil : aucun site n’est ouvert.</p>
+        <form id="url-analyzer-form" novalidate>
+          <label for="url-analyzer-input">Adresse Web à analyser</label>
+          <div class="url-analyzer-controls"><input id="url-analyzer-input" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://login.roblox.com.verification-urgence.com/connexion" aria-describedby="url-analyzer-hint"><button type="submit" class="btn primary">Analyser</button></div>
+          <p id="url-analyzer-hint">Tu peux aussi saisir une adresse sans « https:// », par exemple www.minecraft.net.</p>
+        </form>
+        <div class="url-example-buttons"><span>Essaie :</span><button type="button" data-url-example="https://www.roblox.com/games">Roblox</button><button type="button" data-url-example="https://roblox.com.verification-urgence.com/connexion">Adresse trompeuse</button><button type="button" data-url-example="https://shop.exemple.co.uk/produits">Extension .co.uk</button></div>
+        <div id="url-analyzer-result" role="status" aria-live="polite" aria-atomic="true"></div>
+      </section>
+      <p class="url-guide-caution"><strong>À se rappeler :</strong> extraire le domaine ne prouve pas qu’un site est sûr. Le cadenas et « https » indiquent une connexion chiffrée, pas l’identité honnête du site. Vérifie aussi le contexte du message.</p>
+    </div>
+  </dialog>
+
+  <dialog id="official-domains-dialog" aria-labelledby="official-domains-title">
+    <header class="url-guide-header">
+      <div><span class="url-guide-eyebrow">LES ADRESSES DE RÉFÉRENCE</span><h2 id="official-domains-title">Domaines officiels</h2></div>
+      <button type="button" id="official-domains-close" aria-label="Fermer les domaines officiels">✕</button>
+    </header>
+    <div class="url-guide-body">
+      <section aria-labelledby="url-official-title">
+        <h3 id="url-official-title">Les domaines officiels à connaître</h3>
+        <dl class="url-official-domains">
+          <div><dt>Roblox</dt><dd>roblox.com</dd></div>
+          <div><dt>Fortnite / Epic Games</dt><dd>fortnite.com · epicgames.com</dd></div>
+          <div><dt>Minecraft</dt><dd>minecraft.net · microsoft.com</dd></div>
+          <div><dt>Google</dt><dd>google.com</dd></div>
+          <div><dt>Microsoft</dt><dd>microsoft.com</dd></div>
+        </dl>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="url-quiz-dialog" aria-labelledby="url-quiz-title">
+    <header class="url-guide-header">
+      <div><span class="url-guide-eyebrow">À TOI DE JOUER</span><h2 id="url-quiz-title">Quiz sur les adresses Web</h2></div>
+      <button type="button" id="url-quiz-close" aria-label="Fermer le quiz">✕</button>
+    </header>
+    <div class="url-quiz-body">
+      <div class="url-quiz-progress-heading"><span id="url-quiz-counter"></span><span>10 adresses à examiner</span></div>
+      <progress id="url-quiz-progress" max="10" value="0" aria-label="Progression du quiz"></progress>
+      <div id="url-quiz-content"></div>
+    </div>
+  </dialog>
 
   <div id="app-window" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="titlebar">
@@ -195,14 +306,14 @@
     "phishing": false
   },
   {
-    "id": 18,
-    "user": "Fortnite_RareSkins",
-    "time": "09:17",
-    "text": "Un costume Fortnite ultra rare est GRATUIT pendant une heure seulement! Connecte-toi vite pour le débloquer avant la fin de l’offre!",
+    "id": 20,
+    "user": "Epic_Security",
+    "time": "09:19",
+    "text": "Une connexion suspecte a été détectée sur ton compte Epic Games! Pour protéger tes costumes et tes V-Bucks, vérifie immédiatement ton mot de passe ici!",
     "phishing": true,
-    "href": "https://fortnite-costumes-gratuits.net",
-    "hrefText": "fortnite-costumes-gratuits.net",
-    "explanation": "skin"
+    "href": "https://security.epicgames.com.protection-joueur.net",
+    "hrefText": "security.epicgames.com.protection-joueur.net",
+    "explanation": "security"
   },
   {
     "id": 19,
@@ -215,14 +326,14 @@
     "explanation": "official"
   },
   {
-    "id": 20,
-    "user": "Epic_Security",
-    "time": "09:19",
-    "text": "Une connexion suspecte a été détectée sur ton compte Epic Games! Pour protéger tes costumes et tes V-Bucks, vérifie immédiatement ton mot de passe ici!",
+    "id": 18,
+    "user": "Fortnite_RareSkins",
+    "time": "09:17",
+    "text": "Un costume Fortnite ultra rare est GRATUIT pendant une heure seulement! Connecte-toi vite pour le débloquer avant la fin de l’offre!",
     "phishing": true,
-    "href": "https://security.epicgames.com.protection-joueur.net",
-    "hrefText": "security.epicgames.com.protection-joueur.net",
-    "explanation": "security"
+    "href": "https://fortnite.com.costumes-gratuits.net",
+    "hrefText": "fortnite.com.costumes-gratuits.net",
+    "explanation": "skin"
   }
 ],
     "roblox": [
@@ -523,7 +634,7 @@
       "officialUrl": "https://www.canadapost-postescanada.ca/",
       "officialLabel": "Site officiel de Postes Canada : ",
       "signature": "Service de livraison Postes Canada",
-      "logo": "assets/images/icons/canada-post.ico",
+      "logo": "assets/images/icons/canada-post.svg",
       "logoAlt": "Logo Postes Canada",
       "clues": [
         "L’objet annonce un échec de livraison pour attirer votre attention et vous inciter à agir.",
@@ -553,24 +664,93 @@
       "officialUrl": "https://support.google.com/accounts/",
       "officialLabel": "Centre d’aide Google : ",
       "supportNote": "Vous pouvez aussi gérer les paramètres et la sécurité de votre compte sur https://myaccount.google.com/."
+    }
+  ]
+}
+,
+  "sms": {
+  "conversations": [
+    {
+      "name": "Alex",
+      "title": "Concours Minecraft",
+      "parts": [
+        {
+          "text": "Salut! J’ai participé à un concours de création Minecraft et il me manque seulement trois votes pour gagner! Peux-tu voter pour moi? Ça prend juste 30 secondes.",
+          "suspect": false
+        },
+        {
+          "text": "Connecte-toi avec ton compte Google ici :",
+          "suspect": true,
+          "suspectText": "compte Google"
+        },
+        {
+          "text": "https://minecraft-concours-vote.net",
+          "href": "https://minecraft-concours-vote.net",
+          "suspect": true
+        }
+      ],
+      "clues": [
+        "Une demande de connexion à ton compte Google pour voter à un concours Minecraft est suspecte.",
+        "minecraft-concours-vote.net tente d’imiter l’adresse officielle minecraft.net."
+      ],
+      "additionalExplanation": [
+        "Le nom d’un ami ne prouve pas l’identité de l’expéditeur. L’arnaqueur peut imiter le nom de ton ami. Confirme la demande avec ton ami par un autre moyen."
+      ]
     },
     {
-      "subject": "Peux-tu m’aider rapidement?",
-      "senderName": "Alex — un ami de la classe",
-      "sender": "alex@gmail.com",
-      "greeting": "Salut!",
-      "intro": "J’ai participé à un concours de création Minecraft et il me manque seulement trois votes pour gagner!",
-      "threat": "Peux-tu voter pour moi? Ça prend juste 30 secondes.",
-      "actionPrompt": "Clique sur le lien et connecte-toi avec ton compte Google pour voter.",
-      "buttonText": "Voter pour Alex",
-      "href": "https://minecraft-concours-vote.net",
-      "signature": "Merci! Alex",
-      "initials": "A",
+      "name": "Récompenses Apple",
+      "title": "iPhone gratuit",
+      "parts": [
+        {
+          "text": "Félicitations! Tu as été sélectionné pour recevoir un iPhone GRATUIT!",
+          "suspect": true
+        },
+        {
+          "text": "Confirme tes coordonnées et paie seulement 2,95 $ de livraison.",
+          "suspect": true
+        },
+        {
+          "text": "Tu as 24 heures pour réclamer ton cadeau :",
+          "suspect": true
+        },
+        {
+          "text": "https://apple-cadeau-livraison.com",
+          "href": "https://apple-cadeau-livraison.com",
+          "suspect": true
+        }
+      ],
       "clues": [
-        "L’objet demande une aide rapide pour attirer votre attention et vous inciter à agir sans prendre le temps de vérifier.",
-        "Le nom « Alex — un ami de la classe » et l’adresse alex@gmail.com peuvent sembler familiers. gmail.com est un domaine légitime, mais cela ne prouve pas que votre ami a envoyé le message : son compte pourrait être compromis ou le nom affiché imité. Confirmez cette demande auprès de lui par un autre moyen.",
-        "La demande de trois votes et la promesse de ne prendre que 30 secondes minimisent l’effort et encouragent à agir vite. La demande de connexion Google pour rendre service doit vous inciter à vérifier.",
-        "L’adresse minecraft-concours-vote.net n’est ni minecraft.net ni google.com. Saisir vos identifiants Google sur cette page pourrait permettre de voler votre compte."
+        "Un iPhone gratuit... un cadeau trop beau pour être vrai!",
+        "La demande de coordonnées et de frais de 2,95 $ peut servir à voler tes renseignements personnels et bancaires.",
+        "Le délai de 24 heures crée un sentiment d’urgence.",
+        "apple-cadeau-livraison.com n’est pas le domaine officiel apple.com."
+      ],
+      "explanationNote": "Le nom affiché « Récompenses Apple » ne prouve pas que le SMS vient d’Apple.",
+      "additionalExplanation": [
+        "Un cadeau trop beau pour être vrai! est toujours suspect.",
+        "Ne donne jamais tes données personnelles pour récupérer un cadeau que tu n’attendais pas."
+      ]
+    },
+    {
+      "name": "Alex",
+      "title": "Code TikTok",
+      "parts": [
+        {
+          "text": "Salut, c’est moi, j’ai perdu mon cell pis j'peux pus accéder à mon compte TikTok.",
+          "suspect": false
+        },
+        {
+          "text": "Je viens de t’envoyer un code. Peux-tu me le renvoyer?",
+          "suspect": true
+        }
+      ],
+      "clues": [
+        "La demande « Je viens de t’envoyer un code. Peux-tu me le renvoyer? » cherche à obtenir TON code personnel. Cette demande sert en réalité à valider l’accès de l’arnaqueur à ton compte."
+      ],
+      "additionalExplanation": [
+        "Le nom d’un ami ne prouve pas l’identité de l’expéditeur. L’arnaqueur peut imiter le nom de ton ami.",
+        "Un code est personnel et ne se transmet jamais.",
+        "Confirme la demande avec ton ami par un autre moyen afin de vérifier si le message vient bien de lui."
       ]
     }
   ]
@@ -579,5 +759,8 @@
   </script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/public-suffix-list.js"></script>
+  <script src="js/url-guide.js"></script>
+  <script src="js/url-quiz.js"></script>
 </body>
 </html>

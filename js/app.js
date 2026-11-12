@@ -12,7 +12,7 @@ async function loadData(){
   }
 
   // Final fallback: empty structure
-  return { games:{}, discord:{}, outlook:{} };
+  return { games:{}, discord:{}, outlook:{}, sms:{} };
 }
 
 // Checks the per-message answers in the expanded chat and shows the matching
@@ -81,11 +81,61 @@ function completeGameChat(chat, gameName, messagesArr){
     if(gameName === 'Fortnite' && link.getAttribute('data-real-href') === 'https://vbucks-cadeau.net') return;
     const text = document.createElement('span');
     text.className = 'mc-completed-link';
+    text.setAttribute('data-href', link.getAttribute('data-real-href') || '');
+    text.tabIndex = 0;
     text.textContent = link.textContent;
     link.replaceWith(text);
   });
   const sendButton = chat.querySelector('.mc-send-btn');
   if(sendButton) sendButton.remove();
+}
+
+function addChatUrlPreview(chat){
+  const win = document.getElementById('app-window');
+  const preview = document.createElement('div');
+  preview.id = 'chat-url-preview';
+  preview.className = 'chat-url-preview';
+  preview.setAttribute('role', 'tooltip');
+  preview.hidden = true;
+  win.appendChild(preview);
+  let activeLink = null;
+  const hide = () => {
+    preview.hidden = true;
+    if(activeLink) activeLink.removeAttribute('aria-describedby');
+    activeLink = null;
+  };
+  const findLink = target => target.closest('.mc-discord-link, .mc-discord-text, .mc-completed-link');
+  const show = link => {
+    const href = link.getAttribute('data-real-href') || link.getAttribute('data-href');
+    if(!href) return;
+    hide();
+    activeLink = link;
+    preview.textContent = href;
+    preview.hidden = false;
+    link.setAttribute('aria-describedby', preview.id);
+    const bounds = link.getBoundingClientRect();
+    const windowBounds = win.getBoundingClientRect();
+    const left = Math.max(12, Math.min(bounds.left - windowBounds.left, win.clientWidth - preview.offsetWidth - 12));
+    const above = bounds.top - windowBounds.top - preview.offsetHeight - 8;
+    const top = above >= 12 ? above : Math.min(bounds.bottom - windowBounds.top + 8, win.clientHeight - preview.offsetHeight - 12);
+    preview.style.left = `${left}px`;
+    preview.style.top = `${Math.max(12, top)}px`;
+  };
+  chat.querySelectorAll('.mc-discord-text').forEach(link => { link.tabIndex = 0; });
+  chat.addEventListener('pointerover', event => {
+    const link = findLink(event.target);
+    if(link) show(link);
+  });
+  chat.addEventListener('pointerout', event => {
+    if(activeLink && !activeLink.contains(event.relatedTarget)) hide();
+  });
+  chat.addEventListener('focusin', event => {
+    const link = findLink(event.target);
+    if(link) show(link);
+  });
+  chat.addEventListener('focusout', hide);
+  chat.addEventListener('scroll', hide);
+  chat.addEventListener('click', hide);
 }
 
 // Generic flag tools: draggable 🚩 source, 🗑️ trash and "Valider" validation button.
@@ -279,6 +329,71 @@ function renderDiscord(data){
   showDiscordInstructions();
 }
 
+function renderSms(data){
+  openAppWindow('SMS — Reconnaître l’hameçonnage', '<div></div>');
+  const content = document.getElementById('app-content');
+  content.classList.add('bg-sms');
+  const views = new Map();
+  const showConversation = index => {
+    if(index < 0 || index >= data.conversations.length) return;
+    if(!views.has(index)){
+      const conversation = data.conversations[index];
+      const stage = document.createElement('section');
+      stage.className = 'sms-stage';
+      stage.innerHTML = `<header class="sms-navigation"><span>${escapeHtml(conversation.title)}</span><nav class="sms-navigation-controls" aria-label="Navigation entre les SMS"><span aria-live="polite">${index + 1}/${data.conversations.length}</span><button type="button" class="sms-previous" aria-label="SMS précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="sms-next" aria-label="SMS suivant" ${index === data.conversations.length - 1 ? 'disabled' : ''}>→</button></nav></header><div class="sms-phone"><div class="sms-status">9:41 <span>▰ ▰</span></div><header class="sms-contact"><span class="sms-avatar" aria-hidden="true">${escapeHtml(conversation.name.charAt(0))}</span><h2>${escapeHtml(conversation.name)}</h2><span>SMS</span></header><div class="sms-thread"><p class="sms-timestamp">Aujourd’hui · 9:41</p><div class="sms-bubble"></div></div><div class="sms-compose" aria-hidden="true">Message texte <span>↑</span></div></div><aside class="sms-help"><h2>Repère les indices</h2><p>Fais glisser un drapeau sur chaque passage suspect, puis appuie sur Valider.</p><p>Dépose un drapeau dans la corbeille pour le retirer.</p></aside>`;
+      stage.querySelector('.sms-previous').addEventListener('click', () => showConversation(index - 1));
+      stage.querySelector('.sms-next').addEventListener('click', () => showConversation(index + 1));
+      const bubble = stage.querySelector('.sms-bubble');
+      conversation.parts.forEach(part => {
+        const paragraph = document.createElement('div');
+        paragraph.className = 'sms-part';
+        let targetHost = paragraph;
+        if(part.href){
+          const link = document.createElement('span');
+          link.className = 'sms-link';
+          link.textContent = part.text;
+          paragraph.appendChild(link);
+        } else if(part.suspectText && part.text.includes(part.suspectText)){
+          const start = part.text.indexOf(part.suspectText);
+          targetHost = document.createElement('span');
+          targetHost.className = 'sms-target-fragment';
+          targetHost.textContent = part.suspectText;
+          paragraph.append(document.createTextNode(part.text.slice(0, start)), targetHost,
+            document.createTextNode(part.text.slice(start + part.suspectText.length)));
+        } else paragraph.textContent = part.text;
+        if(part.suspect){
+          const target = document.createElement('span');
+          target.className = 'discord-phishing-target';
+          target.style.inset = '0';
+          targetHost.appendChild(target);
+        }
+        bubble.appendChild(paragraph);
+      });
+      addFlagTools(stage, {
+        sourcePos: { left: '65%', top: '51%' },
+        trashPos: { left: '80%', top: '51%' },
+        reportPos: { left: '68%', top: '60%' },
+        reportClass: 'discord-report-button',
+        onSubmit: (correctCount, targets) => {
+          const incorrectFlags = Array.from(stage.querySelectorAll('.discord-draggable-flag')).filter(flag => {
+            const rect = flag.getBoundingClientRect();
+            const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+            return !targets.some(target => {
+              const box = target.getBoundingClientRect();
+              return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+            });
+          }).length;
+          showSmsResult(conversation, correctCount, targets.length, incorrectFlags);
+        }
+      });
+      views.set(index, stage);
+    }
+    content.replaceChildren(views.get(index));
+    content.scrollTop = 0;
+  };
+  showConversation(0);
+}
+
 function renderOutlook(data){
   openAppWindow('Outlook', '<div></div>');
   const content = document.getElementById('app-content');
@@ -301,24 +416,26 @@ function createOutlookEmail(data, index, total, showEmail){
   const stage = document.createElement('section');
   stage.className = 'outlook-exercise-stage';
   stage.setAttribute('aria-label', 'Courriel Outlook à analyser');
-  stage.innerHTML = `<header class="outlook-exercise-header"><span>▦ &nbsp; Outlook</span><nav class="outlook-email-navigation" aria-label="Navigation entre les courriels"><span aria-live="polite">${index + 1} / ${total}</span><button type="button" class="outlook-email-previous" aria-label="Courriel précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="outlook-email-next" aria-label="Courriel suivant" ${index === total - 1 ? 'disabled' : ''}>→</button></nav></header><div class="outlook-exercise-toolbar">Supprimer &nbsp; | &nbsp; Archiver &nbsp; | &nbsp; Signaler &nbsp; | &nbsp; Répondre &nbsp; | &nbsp; Transférer</div><h1 class="outlook-clue">${escapeHtml(data.subject)}<span class="discord-phishing-target"></span></h1><div class="outlook-exercise-mail"><div class="outlook-sender-row">${data.logo ? `<img class="outlook-sender-logo" src="${escapeHtml(data.logo)}" alt="${escapeHtml(data.logoAlt)}" width="44" height="44">` : `<span class="outlook-sender-avatar" aria-hidden="true">${escapeHtml(data.initials || data.senderName.charAt(0))}</span>`}<div class="outlook-exercise-sender outlook-clue"><strong>${escapeHtml(data.senderName)}</strong><br>&lt;${escapeHtml(data.sender)}&gt;<div class="discord-phishing-target"></div></div></div><p>À : Vous</p><p>${escapeHtml(data.greeting || 'Bonjour,')}</p><p${data.clueField === 'intro' ? ' class="outlook-clue"' : ''}>${escapeHtml(data.intro).replace(/100 \$/g, '<strong>100 $</strong>')}${data.clueField === 'intro' ? '<span class="discord-phishing-target"></span>' : ''}</p>${data.threat ? `<p class="outlook-clue outlook-exercise-threat">${escapeHtml(data.threat).replace(/\bimmédiatement\b/g, '<strong><u>immédiatement</u></strong>')}${data.actionPrompt ? ` ${escapeHtml(data.actionPrompt)}` : ''}<span class="discord-phishing-target"></span></p>` : ''}${!data.threat && data.actionPrompt ? `<p>${escapeHtml(data.actionPrompt)}</p>` : ''}<div class="outlook-exercise-action outlook-clue"><button type="button" class="outlook-inspect-link" aria-expanded="false" aria-controls="outlook-link-destination">${escapeHtml(data.buttonText)}</button><div class="outlook-link-destination" id="outlook-link-destination" hidden>${escapeHtml(data.href)}</div><span class="discord-phishing-target"></span></div>${data.closing ? `<p>${escapeHtml(data.closing)}</p>` : ''}${data.supportNote ? `<p>${escapeHtml(data.supportNote)}</p>` : ''}${data.officialUrl ? `<p>${data.contact ? `Pour toute question : <span class="outlook-official-url">${escapeHtml(data.contact)}</span><br>Ce message a été généré par ` : escapeHtml(data.officialLabel || 'Support officiel : ')}<span class="outlook-official-url">${escapeHtml(data.officialUrl)}</span>.</p>` : ''}<p>${escapeHtml(data.signature)}</p></div><aside class="outlook-exercise-help">Faites glisser un drapeau sur chaque indice suspect et valider en appuyant sur le bouton.</aside>`;
+  stage.innerHTML = `<header class="outlook-exercise-header"><span>▦ &nbsp; Outlook</span><nav class="outlook-email-navigation" aria-label="Navigation entre les courriels"><span aria-live="polite">${index + 1} / ${total}</span><button type="button" class="outlook-email-previous" aria-label="Courriel précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="outlook-email-next" aria-label="Courriel suivant" ${index === total - 1 ? 'disabled' : ''}>→</button></nav></header><div class="outlook-exercise-toolbar">Supprimer &nbsp; | &nbsp; Archiver &nbsp; | &nbsp; Signaler &nbsp; | &nbsp; Répondre &nbsp; | &nbsp; Transférer</div><h1 class="outlook-clue">${escapeHtml(data.subject)}${data.onlyActionClue ? '' : '<span class="discord-phishing-target"></span>'}</h1><div class="outlook-exercise-mail"><div class="outlook-sender-row">${data.logo ? `<img class="outlook-sender-logo" src="${escapeHtml(data.logo)}" alt="${escapeHtml(data.logoAlt)}" width="44" height="44">` : `<span class="outlook-sender-avatar" aria-hidden="true">${escapeHtml(data.initials || data.senderName.charAt(0))}</span>`}<div class="outlook-exercise-sender outlook-clue"><strong>${escapeHtml(data.senderName)}</strong><br>&lt;${escapeHtml(data.sender)}&gt;${data.onlyActionClue ? '' : '<div class="discord-phishing-target"></div>'}</div></div><p>À : Vous</p><p>${escapeHtml(data.greeting || 'Bonjour,')}</p><p${data.clueField === 'intro' ? ' class="outlook-clue"' : ''}>${escapeHtml(data.intro).replace(/100 \$/g, '<strong>100 $</strong>')}${data.clueField === 'intro' ? '<span class="discord-phishing-target"></span>' : ''}</p>${data.threat ? `<p class="outlook-clue outlook-exercise-threat">${escapeHtml(data.threat).replace(/\bimmédiatement\b/g, '<strong><u>immédiatement</u></strong>')}${data.actionPrompt ? ` ${escapeHtml(data.actionPrompt)}` : ''}<span class="discord-phishing-target"></span></p>` : ''}${!data.threat && data.actionPrompt ? `<p>${escapeHtml(data.actionPrompt)}</p>` : ''}${data.href ? `<div class="outlook-exercise-action outlook-clue"><button type="button" class="outlook-inspect-link" aria-expanded="false" aria-controls="outlook-link-destination">${escapeHtml(data.buttonText)}</button><div class="outlook-link-destination" id="outlook-link-destination" hidden>${escapeHtml(data.href)}</div><span class="discord-phishing-target"></span></div>` : `<p class="outlook-clue">${escapeHtml(data.actionText)}<span class="discord-phishing-target"></span></p>`}${data.closing ? `<p>${escapeHtml(data.closing)}</p>` : ''}${data.supportNote ? `<p>${escapeHtml(data.supportNote)}</p>` : ''}${data.officialUrl ? `<p>${data.contact ? `Pour toute question : <span class="outlook-official-url">${escapeHtml(data.contact)}</span><br>Ce message a été généré par ` : escapeHtml(data.officialLabel || 'Support officiel : ')}<span class="outlook-official-url">${escapeHtml(data.officialUrl)}</span>.</p>` : ''}${data.signature ? `<p>${escapeHtml(data.signature)}</p>` : ''}</div><aside class="outlook-exercise-help">Faites glisser un drapeau sur chaque indice suspect et valider en appuyant sur le bouton.</aside>`;
   stage.querySelector('.outlook-email-previous').addEventListener('click', () => showEmail(index - 1));
   stage.querySelector('.outlook-email-next').addEventListener('click', () => showEmail(index + 1));
   stage.querySelectorAll('.outlook-clue .discord-phishing-target').forEach(target => {
     Object.assign(target.style, { inset: '0' });
   });
-  const inspect = stage.querySelector('.outlook-inspect-link');
-  const destination = stage.querySelector('.outlook-link-destination');
-  let hovering = false;
-  const updateDestination = () => {
-    const visible = hovering || inspect.matches(':focus-visible');
-    destination.hidden = !visible;
-    inspect.setAttribute('aria-expanded', String(visible));
-  };
-  inspect.addEventListener('pointerenter', () => { hovering = true; updateDestination(); });
-  inspect.addEventListener('pointerleave', () => { hovering = false; updateDestination(); });
-  inspect.addEventListener('focus', updateDestination);
-  inspect.addEventListener('blur', updateDestination);
+  if(data.href){
+    const inspect = stage.querySelector('.outlook-inspect-link');
+    const destination = stage.querySelector('.outlook-link-destination');
+    let hovering = false;
+    const updateDestination = () => {
+      const visible = hovering || inspect.matches(':focus-visible');
+      destination.hidden = !visible;
+      inspect.setAttribute('aria-expanded', String(visible));
+    };
+    inspect.addEventListener('pointerenter', () => { hovering = true; updateDestination(); });
+    inspect.addEventListener('pointerleave', () => { hovering = false; updateDestination(); });
+    inspect.addEventListener('focus', updateDestination);
+    inspect.addEventListener('blur', updateDestination);
+  }
   addFlagTools(stage, {
     sourcePos: { right: '18%', top: '50%' },
     trashPos: { right: '7%', top: '50%' },
@@ -406,6 +523,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
         anchors.forEach(a=>{
           const span = document.createElement('span');
           span.className = 'mc-discord-text';
+          span.tabIndex = 0;
           span.setAttribute('data-href', a.getAttribute('data-real-href') || '');
           span.textContent = a.textContent;
           a.parentNode.replaceChild(span, a);
@@ -414,6 +532,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
       const chat = document.querySelector('.mc-chat');
       if(chat){
+        addChatUrlPreview(chat);
         chat.addEventListener('click', e=>{
           const a = e.target.closest('a');
           if(a){
@@ -450,5 +569,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
       }
     } else if(app==='discord') renderDiscord(data.discord);
     else if(app==='outlook') renderOutlook(data.outlook);
+    else if(app==='sms') renderSms(data.sms);
   }));
 });

@@ -150,14 +150,14 @@
     "phishing": false
   },
   {
-    "id": 18,
-    "user": "Fortnite_RareSkins",
-    "time": "09:17",
-    "text": "Un costume Fortnite ultra rare est GRATUIT pendant une heure seulement! Connecte-toi vite pour le débloquer avant la fin de l’offre!",
+    "id": 20,
+    "user": "Epic_Security",
+    "time": "09:19",
+    "text": "Une connexion suspecte a été détectée sur ton compte Epic Games! Pour protéger tes costumes et tes V-Bucks, vérifie immédiatement ton mot de passe ici!",
     "phishing": true,
-    "href": "https://fortnite-costumes-gratuits.net",
-    "hrefText": "fortnite-costumes-gratuits.net",
-    "explanation": "skin"
+    "href": "https://security.epicgames.com.protection-joueur.net",
+    "hrefText": "security.epicgames.com.protection-joueur.net",
+    "explanation": "security"
   },
   {
     "id": 19,
@@ -170,14 +170,14 @@
     "explanation": "official"
   },
   {
-    "id": 20,
-    "user": "Epic_Security",
-    "time": "09:19",
-    "text": "Une connexion suspecte a été détectée sur ton compte Epic Games! Pour protéger tes costumes et tes V-Bucks, vérifie immédiatement ton mot de passe ici!",
+    "id": 18,
+    "user": "Fortnite_RareSkins",
+    "time": "09:17",
+    "text": "Un costume Fortnite ultra rare est GRATUIT pendant une heure seulement! Connecte-toi vite pour le débloquer avant la fin de l’offre!",
     "phishing": true,
-    "href": "https://security.epicgames.com.protection-joueur.net",
-    "hrefText": "security.epicgames.com.protection-joueur.net",
-    "explanation": "security"
+    "href": "https://fortnite.com.costumes-gratuits.net",
+    "hrefText": "fortnite.com.costumes-gratuits.net",
+    "explanation": "skin"
   }
 ],
     "roblox": [
@@ -478,7 +478,7 @@
       "officialUrl": "https://www.canadapost-postescanada.ca/",
       "officialLabel": "Site officiel de Postes Canada : ",
       "signature": "Service de livraison Postes Canada",
-      "logo": "assets/images/icons/canada-post.ico",
+      "logo": "assets/images/icons/canada-post.svg",
       "logoAlt": "Logo Postes Canada",
       "clues": [
         "L’objet annonce un échec de livraison pour attirer votre attention et vous inciter à agir.",
@@ -508,24 +508,93 @@
       "officialUrl": "https://support.google.com/accounts/",
       "officialLabel": "Centre d’aide Google : ",
       "supportNote": "Vous pouvez aussi gérer les paramètres et la sécurité de votre compte sur https://myaccount.google.com/."
+    }
+  ]
+}
+,
+  "sms": {
+  "conversations": [
+    {
+      "name": "Alex",
+      "title": "Concours Minecraft",
+      "parts": [
+        {
+          "text": "Salut! J’ai participé à un concours de création Minecraft et il me manque seulement trois votes pour gagner! Peux-tu voter pour moi? Ça prend juste 30 secondes.",
+          "suspect": false
+        },
+        {
+          "text": "Connecte-toi avec ton compte Google ici :",
+          "suspect": true,
+          "suspectText": "compte Google"
+        },
+        {
+          "text": "https://minecraft-concours-vote.net",
+          "href": "https://minecraft-concours-vote.net",
+          "suspect": true
+        }
+      ],
+      "clues": [
+        "Une demande de connexion à ton compte Google pour voter à un concours Minecraft est suspecte.",
+        "minecraft-concours-vote.net tente d’imiter l’adresse officielle minecraft.net."
+      ],
+      "additionalExplanation": [
+        "Le nom d’un ami ne prouve pas l’identité de l’expéditeur. L’arnaqueur peut imiter le nom de ton ami. Confirme la demande avec ton ami par un autre moyen."
+      ]
     },
     {
-      "subject": "Peux-tu m’aider rapidement?",
-      "senderName": "Alex — un ami de la classe",
-      "sender": "alex@gmail.com",
-      "greeting": "Salut!",
-      "intro": "J’ai participé à un concours de création Minecraft et il me manque seulement trois votes pour gagner!",
-      "threat": "Peux-tu voter pour moi? Ça prend juste 30 secondes.",
-      "actionPrompt": "Clique sur le lien et connecte-toi avec ton compte Google pour voter.",
-      "buttonText": "Voter pour Alex",
-      "href": "https://minecraft-concours-vote.net",
-      "signature": "Merci! Alex",
-      "initials": "A",
+      "name": "Récompenses Apple",
+      "title": "iPhone gratuit",
+      "parts": [
+        {
+          "text": "Félicitations! Tu as été sélectionné pour recevoir un iPhone GRATUIT!",
+          "suspect": true
+        },
+        {
+          "text": "Confirme tes coordonnées et paie seulement 2,95 $ de livraison.",
+          "suspect": true
+        },
+        {
+          "text": "Tu as 24 heures pour réclamer ton cadeau :",
+          "suspect": true
+        },
+        {
+          "text": "https://apple-cadeau-livraison.com",
+          "href": "https://apple-cadeau-livraison.com",
+          "suspect": true
+        }
+      ],
       "clues": [
-        "L’objet demande une aide rapide pour attirer votre attention et vous inciter à agir sans prendre le temps de vérifier.",
-        "Le nom « Alex — un ami de la classe » et l’adresse alex@gmail.com peuvent sembler familiers. gmail.com est un domaine légitime, mais cela ne prouve pas que votre ami a envoyé le message : son compte pourrait être compromis ou le nom affiché imité. Confirmez cette demande auprès de lui par un autre moyen.",
-        "La demande de trois votes et la promesse de ne prendre que 30 secondes minimisent l’effort et encouragent à agir vite. La demande de connexion Google pour rendre service doit vous inciter à vérifier.",
-        "L’adresse minecraft-concours-vote.net n’est ni minecraft.net ni google.com. Saisir vos identifiants Google sur cette page pourrait permettre de voler votre compte."
+        "Un iPhone gratuit... un cadeau trop beau pour être vrai!",
+        "La demande de coordonnées et de frais de 2,95 $ peut servir à voler tes renseignements personnels et bancaires.",
+        "Le délai de 24 heures crée un sentiment d’urgence.",
+        "apple-cadeau-livraison.com n’est pas le domaine officiel apple.com."
+      ],
+      "explanationNote": "Le nom affiché « Récompenses Apple » ne prouve pas que le SMS vient d’Apple.",
+      "additionalExplanation": [
+        "Un cadeau trop beau pour être vrai! est toujours suspect.",
+        "Ne donne jamais tes données personnelles pour récupérer un cadeau que tu n’attendais pas."
+      ]
+    },
+    {
+      "name": "Alex",
+      "title": "Code TikTok",
+      "parts": [
+        {
+          "text": "Salut, c’est moi, j’ai perdu mon cell pis j'peux pus accéder à mon compte TikTok.",
+          "suspect": false
+        },
+        {
+          "text": "Je viens de t’envoyer un code. Peux-tu me le renvoyer?",
+          "suspect": true
+        }
+      ],
+      "clues": [
+        "La demande « Je viens de t’envoyer un code. Peux-tu me le renvoyer? » cherche à obtenir TON code personnel. Cette demande sert en réalité à valider l’accès de l’arnaqueur à ton compte."
+      ],
+      "additionalExplanation": [
+        "Le nom d’un ami ne prouve pas l’identité de l’expéditeur. L’arnaqueur peut imiter le nom de ton ami.",
+        "Un code est personnel et ne se transmet jamais.",
+        "Confirme la demande avec ton ami par un autre moyen afin de vérifier si le message vient bien de lui."
       ]
     }
   ]

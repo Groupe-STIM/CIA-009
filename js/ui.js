@@ -9,11 +9,14 @@ function openAppWindow(title, htmlContent){
     if(cls.startsWith('bg-')) content.classList.remove(cls);
   });
   content.style.backgroundImage = '';
-  win.querySelectorAll('.link-alert-overlay').forEach(el => el.remove());
+  win.querySelectorAll('.link-alert-overlay, .chat-url-preview').forEach(el => el.remove());
 
   document.getElementById('app-title').textContent = title;
   content.innerHTML = htmlContent;
   win.setAttribute('aria-hidden','false');
+  document.getElementById('url-guide-button').hidden = true;
+  document.getElementById('url-quiz-button').hidden = true;
+  document.getElementById('official-domains-button').hidden = false;
   content.focus();
 }
 function showMinecraftExplanation(kind){
@@ -96,6 +99,29 @@ function showDiscordInstructions(){
   document.getElementById('close-discord-instructions').addEventListener('click', () => overlay.remove());
 }
 
+function showSmsPopup(title, body){
+  const existing = document.getElementById('sms-popup');
+  if(existing) existing.remove();
+  const previousFocus = document.activeElement;
+  const overlay = document.createElement('div');
+  overlay.className = 'link-alert-overlay';
+  overlay.id = 'sms-popup';
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="sms-popup-title"><div class="title" id="sms-popup-title">${escapeHtml(title)}</div><div class="body">${body}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
+  document.getElementById('app-window').appendChild(overlay);
+  const close = overlay.querySelector('button');
+  close.addEventListener('click', () => { overlay.remove(); previousFocus.focus(); });
+  close.focus();
+}
+
+function showSmsResult(conversation, correctCount, totalCount, incorrectFlags){
+  const success = correctCount === totalCount && incorrectFlags === 0;
+  const format = text => escapeHtml(text).replace(/\bTON\b/g, '<strong>TON</strong>').replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<span class="sms-explanation-url">${url}</span>`);
+  const body = success
+    ? `<p>${totalCount === 1 ? 'Tu as identifié l’indice d’hameçonnage.' : 'Tu as identifié tous les indices d’hameçonnage.'}</p><p class="clues-heading"><span role="img" aria-label="Indice">🔎</span> <strong>Les indices :</strong></p><ul>${conversation.clues.map(clue => `<li>${format(clue)}</li>`).join('')}</ul>${conversation.explanationNote ? `<p>${format(conversation.explanationNote)}</p>` : ''}${conversation.additionalExplanation ? `<p class="reminder-heading"><span class="reminder-warning" role="img" aria-label="Attention">!</span> <strong>À se rappeler :</strong></p><ul>${conversation.additionalExplanation.map(text => `<li>${format(text)}</li>`).join('')}</ul>` : ''}`
+    : `<p>Tu as correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau est mal placé' : 'drapeaux sont mal placés'}.</p>` : ''}<p>Relis le SMS et ajuste tes drapeaux.</p><p><strong>Indice :</strong> ${totalCount === 1 ? 'un seul passage suspect est à identifier.' : `${totalCount} passages suspects sont à identifier.`}</p>`;
+  showSmsPopup(success ? 'Bravo !' : 'Certains indices sont à revoir', body);
+}
+
 function showOutlookInstructions(){
   const existing = document.getElementById('outlook-instructions-overlay');
   if(existing) existing.remove();
@@ -117,8 +143,8 @@ function showOutlookSuccessAlert(correctCount, totalCount, incorrectFlags = 0, e
   overlay.id = 'outlook-success-overlay';
   const title = success ? 'Bravo !' : 'Certains indices sont à revoir';
   const message = success
-    ? `<p>Vous avez identifié les quatre indices d’hameçonnage.</p><ul>${email.clues.map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net|example|ca|ggmail)\b/gi, url => `<span class="outlook-explanation-url">${url}</span>`)}</li>`).join('')}</ul><p>${email.logo ? 'Un logo officiel peut être copié : sa présence ne prouve pas l’authenticité du courriel.' : 'Un nom familier ne prouve pas l’identité de l’expéditeur. Confirmez la demande avec votre ami par un autre moyen avant de vous connecter.'} La présence d’adresses officielles ne garantit pas non plus que tout le message est légitime. Pour vérifier votre compte, ouvrez vous-même le site officiel plutôt que de suivre le bouton du courriel.</p>`
-    : `<p>Vous avez correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau a été placé incorrectement' : 'drapeaux ont été placés incorrectement'}.</p>` : ''}<p>Examinez l’objet, l’expéditeur, le texte du courriel et l’adresse du bouton, puis ajustez vos drapeaux. Retirez aussi les drapeaux placés en dehors des indices suspects.</p><p><strong>Indice :</strong> quatre éléments suspects sont à identifier.</p>`;
+    ? `<p>${totalCount === 1 ? "Vous avez identifié l’indice d’hameçonnage." : "Vous avez identifié les quatre indices d’hameçonnage."}</p><p class="clues-heading"><span role="img" aria-label="Indice">🔎</span> <strong>Les indices :</strong></p><ul>${email.clues.map(clue => `<li>${escapeHtml(clue).replace(/\bTON\b/g, '<strong>TON</strong>').replace(/\b(?:[a-z0-9-]+\.)+(?:com|net|example|ca|ggmail)\b/gi, url => `<span class="outlook-explanation-url">${url}</span>`)}</li>`).join('')}</ul>${email.additionalExplanation ? `<p class="reminder-heading"><span class="reminder-warning" role="img" aria-label="Attention">!</span> <strong>À se rappeler :</strong></p><ul>${email.additionalExplanation.map(text => `<li>${escapeHtml(text)}</li>`).join('')}</ul>` : ''}${email.href ? `<p>${email.logo ? 'Un logo officiel peut être copié : sa présence ne prouve pas l’authenticité du courriel.' : 'Un nom familier ne prouve pas l’identité de l’expéditeur. Confirmez la demande avec votre ami par un autre moyen avant de vous connecter.'} La présence d’adresses officielles ne garantit pas non plus que tout le message est légitime. ${email.href ? 'Pour vérifier votre compte, ouvrez vous-même le site officiel plutôt que de suivre le bouton du courriel.' : 'Ne transmettez aucun code reçu par SMS ou par courriel, même à une personne qui prétend être un ami.'}</p>` : ''}`
+    : `<p>Vous avez correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau a été placé incorrectement' : 'drapeaux ont été placés incorrectement'}.</p>` : ''}<p>${escapeHtml(email.validationHint || 'Examinez l’objet, l’expéditeur, le texte du courriel et l’adresse du bouton, puis ajustez vos drapeaux.')} Retirez aussi les drapeaux placés en dehors des indices suspects.</p><p><strong>Indice :</strong> ${totalCount === 1 ? 'un seul élément suspect est à identifier.' : 'quatre éléments suspects sont à identifier.'}</p>`;
   overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="outlook-success-title"><div class="title" id="outlook-success-title">${title}</div><div class="body">${message}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
   const previousFocus = document.activeElement;
   document.getElementById('app-window').appendChild(overlay);
@@ -169,7 +195,7 @@ function showFortnitePhishingExplanation(kind){
     skin: [
       'Une offre de costume ultra rare gratuit pour attirer votre attention.',
       'Une limite d’une heure qui crée un sentiment d’urgence.',
-      'Une demande de connexion sur fortnite-costumes-gratuits.net, une adresse non officielle qui cherche à récupérer vos identifiants. Les deux adresses officielles sont fortnite.com et epicgames.com.'
+      'Une demande de connexion sur fortnite.com.costumes-gratuits.net, une adresse non officielle qui cherche à récupérer vos identifiants. Le domaine principal est costumes-gratuits.net : « fortnite.com » est ici un sous-domaine trompeur. Les deux adresses officielles sont fortnite.com et epicgames.com.'
     ],
     security: [
       'Un message qui fait peur en évoquant une connexion suspecte et la perte de vos objets.',
@@ -288,6 +314,10 @@ function showChatAllGoodAlert(){
 function closeAppWindow(){
   const win = document.getElementById('app-window');
   win.setAttribute('aria-hidden','true');
+  document.getElementById('url-guide-button').hidden = false;
+  document.getElementById('url-quiz-button').hidden = false;
+  document.getElementById('official-domains-button').hidden = false;
+  win.querySelectorAll('.chat-url-preview').forEach(el => el.remove());
   const content = document.getElementById('app-content');
   // remove any app-specific background classes and inline background overrides
   Array.from(content.classList).filter(cls => cls.startsWith('bg-')).forEach(cls => content.classList.remove(cls));
@@ -297,6 +327,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('close-window').addEventListener('click', closeAppWindow);
   document.addEventListener('keydown', e=>{
     const win = document.getElementById('app-window');
-    if(e.key==='Escape' && win.getAttribute('aria-hidden')==='false') closeAppWindow();
+    if(e.key==='Escape' && !document.querySelector('dialog[open]') && win.getAttribute('aria-hidden')==='false') closeAppWindow();
   });
 });
