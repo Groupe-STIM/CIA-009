@@ -39,7 +39,7 @@ function checkChatAnswers(gameName, messagesArr){
     if(['Roblox', 'Fortnite', 'Minecraft'].includes(gameName)) completeGameChat(chat, gameName, messagesArr);
     if(typeof showChatAllGoodAlert === 'function') showChatAllGoodAlert();
   } else {
-    if(typeof showChatPartialAlert === 'function') showChatPartialAlert(good, total);
+    if(typeof showChatPartialAlert === 'function') showChatPartialAlert(good, total, messagesArr.filter(message => message.phishing).length);
   }
 }
 
@@ -392,6 +392,7 @@ function renderSms(data){
     content.scrollTop = 0;
   };
   showConversation(0);
+  showSmsInstructions();
 }
 
 function renderOutlook(data){

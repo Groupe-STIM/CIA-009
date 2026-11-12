@@ -62,7 +62,7 @@ window.addEventListener('DOMContentLoaded', () => {
     progress.value = state.answers.filter(answer => answer !== null).length;
     if(state.finished){
       counter.textContent = 'Quiz terminé';
-      content.innerHTML = `<section class="url-quiz-summary"><h3 tabindex="-1">Ton résultat</h3><p class="url-quiz-score">${getUrlQuizScore(state)}<span> / 10</span></p><p>Tu as terminé les dix questions sur le domaine principal des adresses Web.</p><button type="button" class="btn primary" id="url-quiz-restart">Recommencer le quiz</button></section>`;
+      content.innerHTML = `<section class="url-quiz-summary"><h3 tabindex="-1">Ton résultat</h3><p class="url-quiz-score">${getUrlQuizScore(state)}<span> / 10</span></p><p>Tu as terminé les dix questions sur le domaine principal des adresses Web.</p><button type="button" class="btn primary" id="url-quiz-restart">Recommencer au début</button></section>`;
       document.getElementById('url-quiz-restart').addEventListener('click', () => { state = createUrlQuizState(); render(); });
       if(focus) content.querySelector('h3').focus();
       return;
@@ -76,7 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const isRight = answered && index === question.answer;
       const isWrong = answered && index === chosen && !correct;
       return `<button type="button" class="url-quiz-choice${isRight ? ' is-correct' : ''}${isWrong ? ' is-incorrect' : ''}" data-quiz-choice="${index}" ${answered ? 'disabled' : ''}><span class="url-quiz-letter">${'ABCD'[index]}</span><span class="url-quiz-choice-text">${escapeHtml(choice)}</span>${isRight ? '<span class="url-quiz-choice-status">✓ Bonne réponse</span>' : isWrong ? '<span class="url-quiz-choice-status">✕ Ta réponse</span>' : ''}</button>`;
-    }).join('')}</div><div class="url-quiz-feedback" role="status" aria-live="polite">${answered ? `<div class="${correct ? 'url-quiz-feedback-correct' : 'url-quiz-feedback-wrong'}" tabindex="-1"><strong>${correct ? 'BRAVO !' : 'La bonne réponse est surlignée.'}</strong><p>${escapeHtml(question.explanation)}</p></div>` : ''}</div><div class="url-quiz-footer"><span>${answered ? 'Les choix sont verrouillés pour cette question.' : 'Une seule réponse possible.'}</span><button type="button" class="btn primary" id="url-quiz-next" ${answered ? '' : 'disabled'}>${state.index === URL_QUIZ_QUESTIONS.length - 1 ? 'Voir mon résultat' : 'Suivant →'}</button></div>`;
+    }).join('')}</div><div class="url-quiz-feedback" role="status" aria-live="polite">${answered ? `<div class="${correct ? 'url-quiz-feedback-correct' : 'url-quiz-feedback-wrong'}" tabindex="-1"><strong>${correct ? 'BRAVO !' : 'La bonne réponse est surlignée.'}</strong><p>${escapeHtml(question.explanation)}</p></div>` : ''}</div><div class="url-quiz-footer"><button type="button" class="btn url-quiz-restart-secondary" id="url-quiz-restart">Recommencer au début</button><button type="button" class="btn primary" id="url-quiz-next" ${answered ? '' : 'disabled'}>${state.index === URL_QUIZ_QUESTIONS.length - 1 ? 'Voir mon résultat' : 'Suivant →'}</button></div>`;
     content.querySelectorAll('[data-quiz-choice]').forEach(button => {
       button.addEventListener('click', () => {
         if(!answerUrlQuiz(state, Number(button.dataset.quizChoice))) return;
@@ -84,6 +84,7 @@ window.addEventListener('DOMContentLoaded', () => {
         content.querySelector('.url-quiz-feedback > div').focus();
       });
     });
+    document.getElementById('url-quiz-restart').addEventListener('click', () => { state = createUrlQuizState(); render(); });
     document.getElementById('url-quiz-next').addEventListener('click', () => {
       if(advanceUrlQuiz(state)) render();
     });

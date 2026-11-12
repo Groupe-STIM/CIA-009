@@ -44,6 +44,9 @@ ctx.escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 callbacks.at(-1)();
 ids['url-quiz-button'].events.click();assert(ids['url-quiz-dialog'].open);assert(ids['url-quiz-counter'].textContent.includes('1 / 10'));
 ids['url-quiz-next'].events.click();assert(ids['url-quiz-counter'].textContent.includes('1 / 10'));
+choices[questions[0].answer].events.click();ids['url-quiz-next'].events.click();
+assert(ids['url-quiz-counter'].textContent.includes('2 / 10'));
+ids['url-quiz-restart'].events.click();assert(ids['url-quiz-counter'].textContent.includes('1 / 10'));assert.equal(ids['url-quiz-progress'].value,0);assert(choices.every(button=>!button.disabled));
 for(let i=0;i<10;i++){
  const choice=i===0?questions[i].answer:(questions[i].answer+1)%4;
  choices[choice].events.click();

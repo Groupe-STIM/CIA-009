@@ -309,14 +309,13 @@ body,html{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;o
 .url-quiz-feedback-correct{background:#f0fdf4;color:#14532d}
 .url-quiz-feedback-wrong{background:#fff7ed;color:#7c2d12}
 .url-quiz-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;padding-top:18px;border-top:1px solid #e2e8f0}
-.url-quiz-footer>span{font-size:12px;color:#64748b}
 #url-quiz-next:disabled{background:#64748b;opacity:.5;cursor:not-allowed}
 .url-quiz-summary{text-align:center;padding:18px 0}
 .url-quiz-score{margin:20px 0;font-size:64px;line-height:1.2;font-weight:800;color:#7c3aed}
 .url-quiz-score span{font-size:28px;color:#64748b}
 .url-quiz-summary p:not(.url-quiz-score){color:#475569}
 .url-quiz-summary button{margin-top:18px}
-@media(max-width:600px){.url-quiz-body{padding:20px 16px}.url-quiz-choices{grid-template-columns:1fr}.url-quiz-address{font-size:16px;padding:16px}.url-quiz-progress-heading{font-size:12px}.url-quiz-footer{align-items:flex-start;flex-direction:column}#url-quiz-next{align-self:flex-end}}
+@media(max-width:600px){.url-quiz-body{padding:20px 16px}.url-quiz-choices{grid-template-columns:1fr}.url-quiz-address{font-size:16px;padding:16px}.url-quiz-progress-heading{font-size:12px}.url-quiz-footer{gap:10px}.url-quiz-footer .btn{font-size:12px;padding:10px}}
 .url-guide-caution{margin-top:28px!important;padding:16px 18px;background:#fff8e6;border:1px solid #fde68a;border-radius:10px;font-size:14px;color:#713f12}
 @media(max-width:600px){.desktop-learning-tools{right:12px;top:14px;gap:8px;max-width:calc(100vw - 122px)}#url-guide-button,#official-domains-button,#url-quiz-button{padding:8px;gap:8px;font-size:12px;text-align:left}#url-guide-button img,#official-domains-button img,#url-quiz-button img{width:34px;height:34px}.url-guide-header{padding:18px;gap:12px}.url-guide-header h2{font-size:21px}.url-guide-body{padding:20px 16px}.url-guide-example{font-size:14px;padding:16px 12px}.url-official-domains{grid-template-columns:1fr}.url-analyzer{padding:16px!important}.url-analyzer-controls{flex-direction:column}.url-analysis-result{padding:14px}.url-analysis-result dl>div{grid-template-columns:1fr;gap:3px}}
 
@@ -325,3 +324,6 @@ body,html{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;o
 #official-domains-dialog{width:min(760px,94vw)}
 #official-domains-button{background:#0c4553e8}
 #official-domains-button:hover{background:#155e75}
+
+.url-quiz-restart-secondary{border:1px solid #cbd5e1;background:#fff;color:#475569;font-weight:600}
+.url-quiz-restart-secondary:hover{background:#f1f5f9}

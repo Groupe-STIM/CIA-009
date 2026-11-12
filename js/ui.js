@@ -24,7 +24,7 @@ function showMinecraftExplanation(kind){
     coins: [
       'Une promesse de 5 000 Minecoins gratuits, trop belle pour être vraie.',
       'Une demande de connexion avec votre compte Microsoft pour recevoir un cadeau.',
-      'Une adresse non officielle : minecoins-cadeau.net n’est pas minecraft.net. Cette offre cherche à récupérer vos identifiants sur une fausse page de connexion.'
+      'Une adresse trompeuse : microsoft.com.minecoins.net appartient au domaine minecoins.net, et non à microsoft.com. Cette offre cherche à récupérer vos identifiants sur une fausse page de connexion.'
     ],
     ban: [
       'Une menace de bannissement définitif qui fait peur.',
@@ -40,22 +40,19 @@ function showMinecraftExplanation(kind){
       'Une offre trop belle pour être vraie : un skin ultra rare gratuit.',
       'Une limite de 24 heures qui crée un sentiment d’urgence.',
       'Une demande d’identifiants Microsoft sur une adresse non officielle : www.minecraft.skins.net appartient au domaine skins.net, et non à minecraft.net.'
-    ],
-    security: [
-      'Un message qui fait peur en évoquant une connexion suspecte.',
-      'Une demande de vérification immédiate du mot de passe qui crée un sentiment d’urgence.',
-      'Une adresse trompeuse : account.microsoft.com.protection-minecraft.net appartient au domaine protection-minecraft.net, et non à microsoft.com.'
     ]
   };
-  if(kind !== 'official' && !clues[kind]) return;
+  if(!['official', 'officialSupport'].includes(kind) && !clues[kind]) return;
   const existing = document.getElementById('minecraft-explanation-alert');
   if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'minecraft-explanation-alert';
-  const title = kind === 'official' ? 'Ceci est un message légitime' : "Ceci est de l'hameçonnage";
+  const title = ['official', 'officialSupport'].includes(kind) ? 'Ceci est un message légitime' : "Ceci est de l'hameçonnage";
   const body = kind === 'official'
     ? '<p>Ce message partage un lien vers <strong>www.minecraft.net</strong>, le site officiel de Minecraft. Il ne demande ni identifiants ni mot de passe et ne promet aucune récompense en échange d’une connexion.</p>'
+    : kind === 'officialSupport'
+      ? '<p>Ce message conseille d’activer la double identification et partage un lien vers <strong>support.microsoft.com</strong>. Le domaine principal est <strong>microsoft.com</strong>, une adresse officielle de Microsoft. Il ne demande ni de transmettre un code ni de se connecter sur un site qui imite Microsoft.</p>'
     : `<p>Plusieurs indices nous indiquent qu'il s'agit d'hameçonnage :</p><ul>${clues[kind].map(clue => `<li>${escapeHtml(clue).replace(/\b(?:[a-z0-9-]+\.)+(?:com|net)\b/gi, url => `<strong>${url}</strong>`)}</li>`).join('')}</ul>`;
   overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="minecraft-explanation-title"><div class="title" id="minecraft-explanation-title">${title}</div><div class="body">${body}<p>Le site officiel de Minecraft est <strong>minecraft.net</strong>. Comme Minecraft appartient à Microsoft, une autre adresse officielle est <strong>microsoft.com</strong>.</p></div><div class="controls"><button class="btn primary" id="close-minecraft-explanation">Fermer</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
@@ -99,18 +96,24 @@ function showDiscordInstructions(){
   document.getElementById('close-discord-instructions').addEventListener('click', () => overlay.remove());
 }
 
-function showSmsPopup(title, body){
+function showSmsPopup(title, body, buttonText = 'Fermer'){
   const existing = document.getElementById('sms-popup');
   if(existing) existing.remove();
   const previousFocus = document.activeElement;
   const overlay = document.createElement('div');
   overlay.className = 'link-alert-overlay';
   overlay.id = 'sms-popup';
-  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="sms-popup-title"><div class="title" id="sms-popup-title">${escapeHtml(title)}</div><div class="body">${body}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
+  overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="sms-popup-title"><div class="title" id="sms-popup-title">${escapeHtml(title)}</div><div class="body">${body}</div><div class="controls"><button class="btn primary">${escapeHtml(buttonText)}</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
   const close = overlay.querySelector('button');
   close.addEventListener('click', () => { overlay.remove(); previousFocus.focus(); });
   close.focus();
+}
+
+function showSmsInstructions(){
+  showSmsPopup('Trouver tous les indices d’hameçonnage dans chacun des SMS',
+    '<p>Pour chacun des SMS, repère les indices d’hameçonnage en faisant glisser un drapeau rouge sur chacun d’entre eux. Appuie ensuite sur Valider.</p><p>Utilise les flèches en haut pour passer au SMS précédent ou suivant. Dépose un drapeau dans la corbeille pour le retirer.</p>',
+    'Commencer');
 }
 
 function showSmsResult(conversation, correctCount, totalCount, incorrectFlags){
@@ -283,7 +286,7 @@ function showChatNoAnswerAlert(){
   document.getElementById('close-chat-result').addEventListener('click', () => overlay.remove());
 }
 
-function showChatPartialAlert(good, total){
+function showChatPartialAlert(good, total, phishingCount = 5){
   const existing = document.getElementById('chat-result-overlay');
   if(existing) existing.remove();
   const overlay = document.createElement('div');
@@ -292,7 +295,7 @@ function showChatPartialAlert(good, total){
   const title = 'Certaines réponses sont à revoir';
   overlay.classList.add('chat-result');
   const message = `Vous avez correctement catégorisé <strong>${good} messages sur ${total}</strong>. Relisez les messages et ajustez vos choix avant de réessayer.`;
-  const hint = "<strong>Indice:</strong> 5 messages sont de l'hameçonnage !";
+  const hint = `<strong>Indice:</strong> ${phishingCount} ${phishingCount === 1 ? "message est" : "messages sont"} de l’hameçonnage !`;
   overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="chat-result-title"><div class="title" id="chat-result-title">${title}</div><div class="body"><p>${message}</p><p>${hint}</p></div><div class="controls"><button class="btn primary" id="close-chat-result">Fermer</button></div></div>`;
   document.getElementById('app-window').appendChild(overlay);
   document.getElementById('close-chat-result').addEventListener('click', () => overlay.remove());

@@ -12,7 +12,7 @@ L’application essaie de charger `data/messages.json`. Si le navigateur bloque 
 
 ### Roblox, Fortnite et Minecraft
 
-Chaque jeu présente dix messages dans un ordre fixe : cinq légitimes et cinq d’hameçonnage. Un clic sur le clavardage l’agrandit. Classez chaque message comme **Normal** ou **Hameçonnage** ; le bouton **Valider** est activé seulement quand tous les messages ont une réponse.
+Les messages sont présentés dans un ordre fixe. Roblox et Fortnite comportent chacun dix messages : cinq légitimes et cinq d’hameçonnage. Minecraft comporte six messages : deux légitimes et quatre d’hameçonnage. Un clic sur le clavardage l’agrandit. Classez chaque message comme **Normal** ou **Hameçonnage** ; le bouton **Valider** est activé seulement quand tous les messages ont une réponse.
 
 En cas d’erreur, le résultat indique le nombre de bonnes réponses et permet de corriger les choix. Après une réussite, les choix deviennent des statuts **✅ Normal** ou **❌ Hameçonnage**. Les boutons **?** affichent les explications associées aux messages suspects et au message contenant un lien officiel.
 
