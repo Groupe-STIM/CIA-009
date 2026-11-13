@@ -7,6 +7,8 @@ body,html{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;o
 #icons{--icons-left:calc(var(--bin-left) + (var(--bin-size) / 2) - 76px);position:absolute;left:var(--icons-left);top:var(--bin-top);z-index:2;display:flex;flex-direction:column;gap:14px;margin:0;padding:0}
 #icons{max-height:calc(100vh - 84px);overflow-y:auto}
 .icon{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:80px;padding:4px;background:transparent;border:0;box-shadow:none;transition:transform .16s ease,box-shadow .16s ease;opacity:1}
+.desktop-icon-spacer{flex:0 0 76px}
+#icons>.icon{flex-shrink:0}
 .icon img{width:40px;height:40px;pointer-events:none;display:block;margin:4px auto}
 .icon span{display:block;text-align:center;font-size:12px;font-weight:400;color:#ffffff;margin-top:6px;-webkit-font-smoothing:antialiased;/* softened black outline */-webkit-text-stroke:0.10px rgba(0,0,0,0.75);text-shadow:
 	0 1px 1px rgba(0,0,0,0.45),
@@ -327,3 +329,5 @@ body,html{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;o
 
 .url-quiz-restart-secondary{border:1px solid #cbd5e1;background:#fff;color:#475569;font-weight:600}
 .url-quiz-restart-secondary:hover{background:#f1f5f9}
+
+@media(max-width:800px){.desktop-icon-spacer{flex-basis:84px}}
