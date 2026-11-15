@@ -145,10 +145,27 @@
     </div>
   </dialog>
 
+  <dialog id="url-quiz-safety-dialog" aria-labelledby="url-quiz-safety-title">
+    <header class="url-guide-header">
+      <h2 id="url-quiz-safety-title">Cette adresse est-elle sécuritaire ?</h2>
+      <button type="button" id="url-quiz-safety-close" aria-label="Fermer le statut de l’adresse">✕</button>
+    </header>
+    <div class="url-quiz-safety-body">
+      <div id="url-quiz-safety-content"></div>
+      <div class="url-quiz-safety-actions"><button type="button" class="btn primary" id="url-quiz-safety-dismiss">Fermer</button></div>
+    </div>
+  </dialog>
+
   <div id="app-window" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="titlebar">
       <span id="app-title">Application</span>
-      <button id="close-window" aria-label="Fermer">✕</button>
+      <div class="app-titlebar-actions">
+        <button id="app-official-domains-button" type="button" aria-haspopup="dialog" aria-controls="official-domains-dialog" aria-label="Domaines officiels">
+          <img src="assets/images/icons/official-domains.svg" alt="" width="22" height="22">
+          <span>Domaines officiels</span>
+        </button>
+        <button id="close-window" aria-label="Fermer">✕</button>
+      </div>
     </div>
     <div id="app-content" tabindex="0"></div>
   </div>
@@ -730,6 +747,7 @@
 }
 }
   </script>
+  <script src="js/exercise-logic.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
   <script src="js/public-suffix-list.js"></script>

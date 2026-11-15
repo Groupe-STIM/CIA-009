@@ -1,24 +1,24 @@
 /* Ten fixed domain-recognition questions. URLs are examples, never opened. */
 const URL_QUIZ_QUESTIONS = [
-  { url: 'https://devforum.roblox.com/', choices: ['devforum.roblox.com', 'roblox.com', 'devforum.com', 'forum.com'], answer: 1,
+  { url: 'https://devforum.roblox.com/', choices: ['devforum.roblox.com', 'roblox.com', 'devforum.com', 'forum.com'], answer: 1, isOfficial: true,
     explanation: 'Le domaine principal est roblox.com. « devforum » est un sous-domaine.' },
-  { url: 'https://login.roblox.com.verification-urgence.com/connexion', choices: ['roblox.com', 'login.roblox.com', 'verification-urgence.com', 'urgence.com'], answer: 2,
+  { url: 'https://login.roblox.com.verification-urgence.com/connexion', choices: ['roblox.com', 'login.roblox.com', 'verification-urgence.com', 'urgence.com'], answer: 2, isOfficial: false,
     explanation: 'Le domaine principal est verification-urgence.com. « login.roblox.com » au début ne transforme pas cette adresse en site Roblox.' },
-  { url: 'https://www.fortnite.com/news?lang=fr', choices: ['fortnite.com', 'www.fortnite.com', 'news.com', 'epicgames.com'], answer: 0,
+  { url: 'https://www.fortnite.com/news?lang=fr', choices: ['fortnite.com', 'www.fortnite.com', 'news.com', 'epicgames.com'], answer: 0, isOfficial: true,
     explanation: 'Le domaine principal est fortnite.com. « www » est un sous-domaine ; /news et ?lang=fr indiquent une page et une option.' },
-  { url: 'https://epicgames.com.verification-compte.net/inscription', choices: ['epicgames.com', 'compte.net', 'epicgames.net', 'verification-compte.net'], answer: 3,
+  { url: 'https://epicgames.com.verification-compte.net/inscription', choices: ['epicgames.com', 'compte.net', 'epicgames.net', 'verification-compte.net'], answer: 3, isOfficial: false,
     explanation: 'Le domaine principal est verification-compte.net. « epicgames.com » est ici un sous-domaine trompeur.' },
-  { url: 'https://www.minecraft.net/fr-fr', choices: ['www.minecraft.net', 'minecraft.net', 'minecraft.com', 'microsoft.com'], answer: 1,
+  { url: 'https://www.minecraft.net/fr-fr', choices: ['www.minecraft.net', 'minecraft.net', 'minecraft.com', 'microsoft.com'], answer: 1, isOfficial: true,
     explanation: 'Le domaine principal est minecraft.net. « www » et le chemin /fr-fr n’en font pas partie.' },
-  { url: 'https://www.minecraft.skins.net/cadeau', choices: ['minecraft.net', 'minecraft.skins.net', 'skins.net', 'www.minecraft.net'], answer: 2,
+  { url: 'https://www.minecraft.skins.net/cadeau', choices: ['minecraft.net', 'minecraft.skins.net', 'skins.net', 'www.minecraft.net'], answer: 2, isOfficial: false,
     explanation: 'Le domaine principal est skins.net. Le mot « minecraft » placé avant ne prouve pas que le site appartient à Minecraft.' },
-  { url: 'https://accounts.google.com/signin', choices: ['google.com', 'accounts.google.com', 'accounts.com', 'google-signin.com'], answer: 0,
+  { url: 'https://accounts.google.com/signin', choices: ['google.com', 'accounts.google.com', 'accounts.com', 'google-signin.com'], answer: 0, isOfficial: true,
     explanation: 'Le domaine principal est google.com. « accounts » est un sous-domaine et /signin est le chemin.' },
-  { url: 'https://security.google.com.verification-compte.com/', choices: ['google.com', 'security.google.com', 'compte.com', 'verification-compte.com'], answer: 3,
+  { url: 'https://security.google.com.verification-compte.com/', choices: ['google.com', 'security.google.com', 'compte.com', 'verification-compte.com'], answer: 3, isOfficial: false,
     explanation: 'Le domaine principal est verification-compte.com. « security.google.com » est un sous-domaine qui cherche à inspirer confiance.' },
-  { url: 'https://security.microsoft.com/compte', choices: ['security.com', 'microsoft.com', 'security.microsoft.com', 'compte.com'], answer: 1,
+  { url: 'https://security.microsoft.com/compte', choices: ['security.com', 'microsoft.com', 'security.microsoft.com', 'compte.com'], answer: 1, isOfficial: true,
     explanation: 'Le domaine principal est microsoft.com. « security » est un sous-domaine et /compte est le chemin.' },
-  { url: 'https://login.microsoft.com.verification-securite.com/', choices: ['microsoft.com', 'login.microsoft.com', 'verification-securite.com', 'securite.com'], answer: 2,
+  { url: 'https://login.microsoft.com.verification-securite.com/', choices: ['microsoft.com', 'login.microsoft.com', 'verification-securite.com', 'securite.com'], answer: 2, isOfficial: false,
     explanation: 'Le domaine principal est verification-securite.com. « login.microsoft.com » n’est que le début trompeur de l’adresse.' }
 ];
 
@@ -44,11 +44,15 @@ function getUrlQuizScore(state){
   return state.answers.reduce((score, answer, index) => score + (answer === URL_QUIZ_QUESTIONS[index].answer ? 1 : 0), 0);
 }
 
-function formatUrlQuizAddress(question, answered){
+function formatUrlQuizAddress(question, answered, showDomainStatus = false){
   if(!answered) return escapeHtml(question.url);
   const result = analyzeLearningUrl(question.url);
   const start = result.domainOffset;
-  return `${escapeHtml(result.fullUrl.slice(0, start))}<mark class="url-quiz-domain">${escapeHtml(result.domain)}</mark>${escapeHtml(result.fullUrl.slice(start + result.domain.length))}`;
+  return `${escapeHtml(result.fullUrl.slice(0, start))}<mark class="url-quiz-domain ${!showDomainStatus || question.isOfficial ? 'is-official' : 'is-deceptive'}">${escapeHtml(result.domain)}</mark>${escapeHtml(result.fullUrl.slice(start + result.domain.length))}`;
+}
+
+function formatUrlQuizVerdict(question){
+  return `<p class="url-quiz-domain-verdict ${question.isOfficial ? 'is-official' : 'is-deceptive'}"><span class="url-quiz-verdict-badge"><span class="url-quiz-verdict-icon" aria-hidden="true">${question.isOfficial ? '✓' : '!'}</span>${question.isOfficial ? '' : '<span>DANGER</span>'}</span><span class="url-quiz-verdict-text"><span>${question.isOfficial ? "OUI, il s’agit d’un nom de domaine officiel :" : "NON, il s’agit d’une adresse trompeuse :"}</span><span class="url-quiz-verdict-url">${formatUrlQuizAddress(question, true, true)}</span></span></p>`;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -57,6 +61,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const content = document.getElementById('url-quiz-content');
   const counter = document.getElementById('url-quiz-counter');
   const progress = document.getElementById('url-quiz-progress');
+  const safetyDialog = document.getElementById('url-quiz-safety-dialog');
+  const safetyContent = document.getElementById('url-quiz-safety-content');
+  let safetyTrigger;
+  document.getElementById('url-quiz-safety-close').addEventListener('click', () => safetyDialog.close());
+  document.getElementById('url-quiz-safety-dismiss').addEventListener('click', () => safetyDialog.close());
+  safetyDialog.addEventListener('close', () => safetyTrigger?.focus());
+  safetyDialog.addEventListener('click', event => {
+    if(event.target !== safetyDialog) return;
+    const bounds = safetyDialog.getBoundingClientRect();
+    if(event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) safetyDialog.close();
+  });
   let state = createUrlQuizState();
   const render = (focus = true) => {
     progress.value = state.answers.filter(answer => answer !== null).length;
@@ -76,7 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const isRight = answered && index === question.answer;
       const isWrong = answered && index === chosen && !correct;
       return `<button type="button" class="url-quiz-choice${isRight ? ' is-correct' : ''}${isWrong ? ' is-incorrect' : ''}" data-quiz-choice="${index}" ${answered ? 'disabled' : ''}><span class="url-quiz-letter">${'ABCD'[index]}</span><span class="url-quiz-choice-text">${escapeHtml(choice)}</span>${isRight ? '<span class="url-quiz-choice-status">✓ Bonne réponse</span>' : isWrong ? '<span class="url-quiz-choice-status">✕ Ta réponse</span>' : ''}</button>`;
-    }).join('')}</div><div class="url-quiz-feedback" role="status" aria-live="polite">${answered ? `<div class="${correct ? 'url-quiz-feedback-correct' : 'url-quiz-feedback-wrong'}" tabindex="-1"><strong>${correct ? 'BRAVO !' : 'La bonne réponse est surlignée.'}</strong><p>${escapeHtml(question.explanation)}</p></div>` : ''}</div><div class="url-quiz-footer"><button type="button" class="btn url-quiz-restart-secondary" id="url-quiz-restart">Recommencer au début</button><button type="button" class="btn primary" id="url-quiz-next" ${answered ? '' : 'disabled'}>${state.index === URL_QUIZ_QUESTIONS.length - 1 ? 'Voir mon résultat' : 'Suivant →'}</button></div>`;
+    }).join('')}</div><div class="url-quiz-feedback" role="status" aria-live="polite">${answered ? `<div class="${correct ? 'url-quiz-feedback-correct' : 'url-quiz-feedback-wrong'}" tabindex="-1"><strong>${correct ? 'BONNE RÉPONSE !' : 'MAUVAISE RÉPONSE !'}</strong><p>${escapeHtml(question.explanation)}</p></div>` : ''}</div><div class="url-quiz-footer"><button type="button" class="btn url-quiz-restart-secondary" id="url-quiz-restart">Recommencer au début</button><button type="button" class="btn url-quiz-safety-button" id="url-quiz-safety-button" aria-haspopup="dialog" aria-controls="url-quiz-safety-dialog" ${answered ? '' : 'hidden'}>Est-ce que cette adresse est sécuritaire ?</button><button type="button" class="btn primary" id="url-quiz-next" ${answered ? '' : 'disabled'}>${state.index === URL_QUIZ_QUESTIONS.length - 1 ? 'Voir mon résultat' : 'Suivant →'}</button></div>`;
     content.querySelectorAll('[data-quiz-choice]').forEach(button => {
       button.addEventListener('click', () => {
         if(!answerUrlQuiz(state, Number(button.dataset.quizChoice))) return;
@@ -84,6 +99,14 @@ window.addEventListener('DOMContentLoaded', () => {
         content.querySelector('.url-quiz-feedback > div').focus();
       });
     });
+    if(answered){
+      const button = document.getElementById('url-quiz-safety-button');
+      button.addEventListener('click', () => {
+        safetyTrigger = button;
+        safetyContent.innerHTML = formatUrlQuizVerdict(question);
+        safetyDialog.showModal();
+      });
+    }
     document.getElementById('url-quiz-restart').addEventListener('click', () => { state = createUrlQuizState(); render(); });
     document.getElementById('url-quiz-next').addEventListener('click', () => {
       if(advanceUrlQuiz(state)) render();
@@ -92,7 +115,10 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   launcher.addEventListener('click', () => { render(false); dialog.showModal(); });
   document.getElementById('url-quiz-close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => launcher.focus());
+  dialog.addEventListener('close', () => {
+    if(safetyDialog.open) safetyDialog.close();
+    launcher.focus();
+  });
   dialog.addEventListener('click', event => {
     if(event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();

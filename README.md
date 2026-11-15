@@ -16,7 +16,7 @@ Les messages sont présentés dans un ordre fixe. Roblox et Fortnite comportent 
 
 En cas d’erreur, le résultat indique le nombre de bonnes réponses et permet de corriger les choix. Après une réussite, les choix deviennent des statuts **✅ Normal** ou **❌ Hameçonnage**. Les boutons **?** affichent les explications associées aux messages suspects et au message contenant un lien officiel.
 
-Les liens du clavardage ne naviguent pas vers les sites présentés. Seul le lien V-Bucks de Fortnite ouvre une illustration locale de page frauduleuse. `blank.html` reste la destination locale de secours des liens simulés.
+Les liens du clavardage restent des liens simulés, sans navigation externe. Leur URL complète s’affiche au survol ou au focus clavier. Seul le lien V-Bucks de Fortnite ouvre une illustration locale de page frauduleuse.
 
 ### Discord
 
@@ -28,15 +28,15 @@ Faites glisser directement le drapeau rouge sur les messages suspects. Déposez 
 
 Les flèches à droite de la bande bleue permettent de parcourir cinq faux courriels : Roblox, Microsoft, YouTube, Postes Canada et Google. Les drapeaux sont conservés pendant la navigation, jusqu’à la fermeture de l’exercice.
 
-Chaque courriel comporte quatre zones à analyser : l’objet, l’expéditeur, un passage suspect et le bouton avec son adresse de destination, L’adresse apparaît au-dessus du bouton au survol ou au focus clavier, puis disparaît quand il n’est plus survolé ni ciblé au clavier. Aucun site externe n’est ouvert.
+Chaque courriel comporte quatre zones à analyser : l’objet, l’expéditeur, un passage suspect et le bouton avec son adresse de destination. L’adresse apparaît au-dessus du bouton au survol ou au focus clavier, puis disparaît quand il n’est plus survolé ni ciblé au clavier. Aucun site externe n’est ouvert.
 
 Placez les drapeaux sur les indices, puis cliquez sur **Valider**. En cas d’erreur, le résultat précise le nombre d’indices repérés et, s’il y en a, le nombre de drapeaux mal placés. La réussite exige de couvrir toutes les zones suspectes du courriel sans signaler d’autres éléments.
 
-Les explications distinguent les domaines officiels des imitations. Elles rappellent que les logos et les liens officiels présents dans un courriel ne prouvent pas son authenticité. Dans le courriel de l’ami, une adresse Gmail légitime ne garantit pas l’identité de l’expéditeur.
+Les explications distinguent les domaines officiels des imitations. Elles rappellent que les logos et les liens officiels présents dans un courriel ne prouvent pas son authenticité.
 
 ### SMS
 
-L’icône **SMS**, sous Outlook sur le bureau, ouvre une simulation de téléphone avec trois conversations : faux concours Minecraft envoyé par un ami, fausse récompense iPhone et faux ami demandant un code TikTok.
+L’icône **SMS**, avant Outlook sur le bureau, ouvre une simulation de téléphone avec trois conversations : faux concours Minecraft envoyé par un ami, fausse récompense iPhone et faux ami demandant un code TikTok.
 
 Les flèches permettent de changer de conversation sans perdre les drapeaux. Faites glisser les drapeaux sur les passages suspects, retirez les erreurs avec la corbeille et appuyez sur **Valider**. Le concours contient deux passages à signaler, l’iPhone quatre et la demande de code TikTok un seul.
 
@@ -56,20 +56,21 @@ Validation de l’outil : `node tests/url-guide.test.cjs`.
 
 ### Domaines officiels
 
-Le bouton **Domaines officiels**, entre l’aide sur les adresses Web et le quiz, ouvre une fenêtre dédiée à la liste des domaines de référence : Roblox, Fortnite / Epic Games, Minecraft, Google et Microsoft. Cette liste n’est plus affichée dans la fenêtre de compréhension. Le bouton reste visible et disponible lorsqu’un exercice est ouvert. Fermer cette fenêtre permet de retrouver l’exercice en cours.
+Le bouton **Domaines officiels**, entre l’aide sur les adresses Web et le quiz, ouvre une fenêtre dédiée à la liste des domaines de référence : Roblox, Fortnite / Epic Games, Minecraft, Google et Microsoft. Cette liste n’est plus affichée dans la fenêtre de compréhension. Lorsqu’un exercice est ouvert, les icônes du bureau passent derrière sa fenêtre. L’accès aux domaines officiels est alors placé dans la barre de titre, à côté du bouton de fermeture, afin de rester disponible sans couvrir l’exercice. Fermer l’aide permet de retrouver l’exercice en cours.
 
 ### Quiz sur les adresses Web
 
 Sous le bouton **Domaines officiels**, une icône ouvre un quiz de dix questions, une à la fois. Chaque URL propose quatre choix pour son domaine principal avec extension. Cinq adresses utilisent des domaines officiels et cinq imitent les plateformes présentées.
 
-Un choix est définitif pour la question : la bonne réponse est surlignée immédiatement, « BRAVO ! » apparaît si le choix est correct et une courte explication accompagne la correction. Le bouton **Suivant** est activé après la réponse. Un résultat sur 10 et un bouton pour recommencer sont affichés à la fin. Fermer et rouvrir la fenêtre conserve la progression jusqu’au rechargement de la page. L’aide de compréhension et le quiz sont masqués lorsqu’un exercice est ouvert ; les domaines officiels restent accessibles.
+Un choix est définitif pour la question : la bonne réponse est surlignée immédiatement, « BONNE RÉPONSE ! » apparaît si le choix est correct et une courte explication accompagne la correction. Après la réponse, le bouton **Est-ce que cette adresse est sécuritaire ?**, centré entre **Recommencer au début** et **Suivant**, ouvre au clic un popup centré au-dessus du quiz présentant le statut du domaine de l’exemple : **✓ OUI, il s’agit d’un nom de domaine officiel :** suivi de l’adresse complète avec le domaine surligné en vert, ou **! DANGER NON, il s’agit d’une adresse trompeuse :** suivi de l’adresse avec le domaine surligné en rouge, indépendamment de la réponse choisie. Le popup se ferme avec **Fermer**, la croix ou la touche Échap, puis rend le focus au bouton. Ce statut décrit les exemples préparés du quiz et ne constitue pas une vérification de sécurité du site. Le bouton **Suivant** est activé après la réponse. Un résultat sur 10 et un bouton pour recommencer sont affichés à la fin. Fermer et rouvrir la fenêtre conserve la progression jusqu’au rechargement de la page. L’aide de compréhension et le quiz sont masqués lorsqu’un exercice est ouvert ; les domaines officiels restent accessibles.
 
 Les questions se trouvent dans `js/url-quiz.js`. Validation : `node tests/url-quiz.test.cjs` ; les réponses sont également comparées à l’analyseur et aux règles de suffixes locales. Les adresses du quiz ne sont jamais ouvertes.
 
 | Élément | Rôle |
 | --- | --- |
 | `index.html` | Bureau, chargement des scripts et copie intégrée des données. |
-| `js/app.js` | Rendu des exercices, navigation, validation et déplacement des drapeaux. |
+| `js/app.js` | Rendu des exercices, navigation et déplacement des drapeaux. |
+| `js/exercise-logic.js` | Calcul partagé des réponses, placement des drapeaux et génération sûre des messages. |
 | `js/ui.js` | Fenêtres et rétroactions explicatives. |
 | `js/url-guide.js` | Fenêtre pédagogique URL et extraction du domaine. |
 | `js/url-quiz.js` | Dix questions, correction immédiate et progression du quiz URL. |
@@ -77,7 +78,6 @@ Les questions se trouvent dans `js/url-quiz.js`. Validation : `node tests/url-qu
 | `styles/styles.css` | Présentation des six applications. |
 | `data/messages.json` | Messages, communautés Discord et courriels Outlook. |
 | `assets/images/` | Arrière-plans, logos et illustration V-Bucks. |
-| `blank.html` | Page locale de secours pour les liens simulés du clavardage. |
 
 - **Messages des jeux** : modifiez `games`, notamment `user`, `text`, `phishing`, `href`, `hrefText` et le type d’`explanation`. Les textes explicatifs sont dans `js/ui.js`.
 - **Discord** : modifiez `discord.communities`. Les messages définissent les zones à signaler via `phishing`. Les explications sont dans `clues` ou dans des groupes `explanations` associés aux messages.
@@ -86,3 +86,28 @@ Les questions se trouvent dans `js/url-quiz.js`. Validation : `node tests/url-qu
 - **Données locales** : répercutez chaque modification de `data/messages.json` dans `embedded-messages` pour conserver le même contenu avec ou sans serveur.
 
 L’application utilise HTML, CSS et JavaScript sans dépendance externe. Les interfaces Discord et Outlook peuvent nécessiter un défilement sur les petits écrans.
+
+## Tests automatisés
+
+Prérequis de développement : **Node.js 18.15 ou plus récent** et **Python 3** (pour les deux tests du script de maintenance des suffixes). Aucune installation de dépendances et aucun accès réseau ne sont nécessaires.
+
+```sh
+npm test
+npm run test:coverage
+```
+
+Sans npm : `node --test tests/*.test.cjs`.
+
+La suite comprend les tests unitaires suivants, ainsi que les contrôles existants de l’analyseur et du quiz :
+
+| Fichier | Couverture fonctionnelle |
+| --- | --- |
+| `tests/exercise-logic.test.cjs` | Réponses incomplètes/correctes, totaux variables, centres et limites des drapeaux, faux positifs, échappement HTML. |
+| `tests/app.test.cjs` | Chargement HTTP et secours local, ouverture des six modes, catégorisation, liens simulés, survol, glisser-déposer/corbeille/annulation et conservation de la progression. |
+| `tests/ui.test.cjs` | Fenêtres, fermeture et focus, protection des dialogues imbriqués, résultats partiels et explications des modes actuels. |
+| `tests/data-integrity.test.cjs` | Égalité des deux JSON, messages et ordres convenus, identifiants uniques, scripts et ressources locales, absence de ressources orphelines. |
+| `tests/url-guide.test.cjs` | Domaines composés, règles génériques et exceptions, noms internationaux, IP, adresses trompeuses, saisies invalides et fenêtre de domaines officiels. |
+| `tests/url-quiz.test.cjs` | Dix réponses validées avec les règles de suffixes, correction immédiate, surlignage, verrouillage, navigation, score et redémarrage. |
+| `tests/update-suffix.test.cjs` | Génération depuis une liste locale et refus d’une source invalide sans écraser le fichier existant. |
+
+Les tests d’interface utilisent des doublures DOM et des rectangles explicites dans `tests/helpers/browser.cjs`. Ils vérifient les règles et les interactions sans moteur de rendu. Ils ne remplacent pas une vérification visuelle dans un navigateur, notamment sur iPad et petit écran.

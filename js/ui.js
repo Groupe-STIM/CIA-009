@@ -16,7 +16,7 @@ function openAppWindow(title, htmlContent){
   win.setAttribute('aria-hidden','false');
   document.getElementById('url-guide-button').hidden = true;
   document.getElementById('url-quiz-button').hidden = true;
-  document.getElementById('official-domains-button').hidden = false;
+  document.getElementById('official-domains-button').hidden = true;
   content.focus();
 }
 function showMinecraftExplanation(kind){
@@ -145,18 +145,14 @@ function showOutlookSuccessAlert(correctCount, totalCount, incorrectFlags = 0, e
   overlay.className = 'link-alert-overlay';
   overlay.id = 'outlook-success-overlay';
   const title = success ? 'Bravo !' : 'Certains indices sont à revoir';
-  const reminders = [...(email.additionalExplanation || [])];
-  if(email.href){
-    reminders.push(email.logo
-      ? 'Un logo officiel peut être copié : sa présence ne prouve pas l’authenticité du courriel.'
-      : 'Un nom familier ne prouve pas l’identité de l’expéditeur. Confirmez la demande avec votre ami par un autre moyen avant de vous connecter.',
-      'La présence d’adresses officielles à l’intérieur du courriel ne garantit pas non plus que tout le message est légitime.',
-      'Pour vérifier votre compte, ouvrez vous-même le site officiel plutôt que de suivre le bouton du courriel.');
-  }
-
+  const reminders = [
+    'Un logo officiel peut être copié : sa présence ne prouve pas l’authenticité du courriel.',
+    'La présence d’adresses officielles à l’intérieur du courriel ne garantit pas non plus que tout le message est légitime.',
+    'Pour vérifier votre compte, ouvrez vous-même le site officiel plutôt que de suivre le bouton du courriel.'
+  ];
   const message = success
-    ? `<p>${totalCount === 1 ? "Vous avez identifié l’indice d’hameçonnage." : "Vous avez identifié les quatre indices d’hameçonnage."}</p><p class="clues-heading"><span role="img" aria-label="Indice">🔎</span> <strong>Les indices :</strong></p><ul>${email.clues.map(clue => `<li>${escapeHtml(clue).replace(/\bTON\b/g, '<strong>TON</strong>').replace(/\b(?:[a-z0-9-]+\.)+(?:com|net|example|ca|ggmail)\b/gi, url => `<span class="outlook-explanation-url">${url}</span>`)}</li>`).join('')}</ul>${reminders.length ? `<p class="reminder-heading"><span class="reminder-warning" role="img" aria-label="Attention">!</span> <strong>À se rappeler :</strong></p><ul>${reminders.map(text => `<li>${escapeHtml(text)}</li>`).join('')}</ul>` : ''}`
-    : `<p>Vous avez correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau a été placé incorrectement' : 'drapeaux ont été placés incorrectement'}.</p>` : ''}<p>${escapeHtml(email.validationHint || 'Examinez l’objet, l’expéditeur, le texte du courriel et l’adresse du bouton, puis ajustez vos drapeaux.')} Retirez aussi les drapeaux placés en dehors des indices suspects.</p><p><strong>Indice :</strong> ${totalCount === 1 ? 'un seul élément suspect est à identifier.' : 'quatre éléments suspects sont à identifier.'}</p>`;
+    ? `<p>Vous avez identifié les quatre indices d’hameçonnage.</p><p class="clues-heading"><span role="img" aria-label="Indice">🔎</span> <strong>Les indices :</strong></p><ul>${email.clues.map(clue => `<li>${escapeHtml(clue).replace(/\bTON\b/g, '<strong>TON</strong>').replace(/\b(?:[a-z0-9-]+\.)+(?:com|net|example|ca|ggmail)\b/gi, url => `<span class="outlook-explanation-url">${url}</span>`)}</li>`).join('')}</ul><p class="reminder-heading"><span class="reminder-warning" role="img" aria-label="Attention">!</span> <strong>À se rappeler :</strong></p><ul>${reminders.map(text => `<li>${escapeHtml(text)}</li>`).join('')}</ul>`
+    : `<p>Vous avez correctement repéré <strong>${correctCount}</strong> ${correctCount === 1 ? 'indice' : 'indices'} sur ${totalCount}.</p>${incorrectFlags > 0 ? `<p><strong>${incorrectFlags}</strong> ${incorrectFlags === 1 ? 'drapeau a été placé incorrectement' : 'drapeaux ont été placés incorrectement'}.</p>` : ''}<p>Examinez l’objet, l’expéditeur, le texte du courriel et l’adresse du bouton, puis ajustez vos drapeaux. Retirez aussi les drapeaux placés en dehors des indices suspects.</p><p><strong>Indice :</strong> quatre éléments suspects sont à identifier.</p>`;
   overlay.innerHTML = `<div class="link-alert" role="alertdialog" aria-modal="true" aria-labelledby="outlook-success-title"><div class="title" id="outlook-success-title">${title}</div><div class="body">${message}</div><div class="controls"><button class="btn primary">Fermer</button></div></div>`;
   const previousFocus = document.activeElement;
   document.getElementById('app-window').appendChild(overlay);
@@ -278,10 +274,6 @@ function showRobloxLegitAlert(){
   document.getElementById('close-roblox-legit').addEventListener('click', ()=>{
     const el = document.getElementById('roblox-legit-alert'); if(el && el.parentNode) el.parentNode.removeChild(el);
   });
-}
-
-function escapeHtml(s){
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function showChatNoAnswerAlert(){

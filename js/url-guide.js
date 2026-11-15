@@ -110,9 +110,15 @@ function displayLearningUrlResult(input, output){
 window.addEventListener('DOMContentLoaded', () => {
   const officialButton = document.getElementById('official-domains-button');
   const officialDialog = document.getElementById('official-domains-dialog');
-  officialButton.addEventListener('click', () => officialDialog.showModal());
+  let officialLauncher = officialButton;
+  [officialButton, document.getElementById('app-official-domains-button')].forEach(button => {
+    button.addEventListener('click', () => {
+      officialLauncher = button;
+      officialDialog.showModal();
+    });
+  });
   document.getElementById('official-domains-close').addEventListener('click', () => officialDialog.close());
-  officialDialog.addEventListener('close', () => officialButton.focus());
+  officialDialog.addEventListener('close', () => officialLauncher.focus());
   officialDialog.addEventListener('click', event => {
     if(event.target !== officialDialog) return;
     const bounds = officialDialog.getBoundingClientRect();

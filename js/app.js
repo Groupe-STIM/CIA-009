@@ -20,27 +20,16 @@ async function loadData(){
 function checkChatAnswers(gameName, messagesArr){
   const chat = document.querySelector('.mc-chat');
   if(!chat) return;
-  const msgs = chat.querySelectorAll('.mc-message');
-  let categorized = 0, good = 0;
-  msgs.forEach(div => {
-    const isPhishing = div.dataset.phishing === '1';
-    const checked = div.querySelector('input[type="radio"]:checked');
-    if(checked){
-      categorized++;
-      if((checked.value === 'phishing') === isPhishing) good++;
-    }
-  });
-  const total = msgs.length;
-  if(categorized === 0){
-    if(typeof showChatNoAnswerAlert === 'function') showChatNoAnswerAlert();
+  const rows = Array.from(chat.querySelectorAll('.mc-message'));
+  const result = evaluateChatAnswers(messagesArr, rows.map(row => row.querySelector('input[type="radio"]:checked')?.value));
+  if(result.categorized === 0){
+    showChatNoAnswerAlert();
     return;
   }
-  if(good === total){
-    if(['Roblox', 'Fortnite', 'Minecraft'].includes(gameName)) completeGameChat(chat, gameName, messagesArr);
-    if(typeof showChatAllGoodAlert === 'function') showChatAllGoodAlert();
-  } else {
-    if(typeof showChatPartialAlert === 'function') showChatPartialAlert(good, total, messagesArr.filter(message => message.phishing).length);
-  }
+  if(result.success){
+    completeGameChat(chat, gameName, messagesArr);
+    showChatAllGoodAlert();
+  } else showChatPartialAlert(result.good, result.total, result.phishingCount);
 }
 
 function completeGameChat(chat, gameName, messagesArr){
@@ -139,7 +128,7 @@ function addChatUrlPreview(chat){
 }
 
 // Generic flag tools: draggable 🚩 source, 🗑️ trash and "Valider" validation button.
-// config: { sourcePos, trashPos, reportPos, reportClass, onSubmit(correctCount, targets) }
+// config: { sourcePos, trashPos, reportPos, reportClass, onSubmit(result) }
 function addFlagTools(content, config){
   if(content.querySelector('.discord-flag-source')) return;
 
@@ -160,16 +149,8 @@ function addFlagTools(content, config){
     const targets = Array.from(content.querySelectorAll('.discord-phishing-target'));
     if(!targets.length) return;
     const flags = Array.from(content.querySelectorAll('.discord-draggable-flag'));
-    const correctCount = targets.filter(target => {
-      const targetBounds = target.getBoundingClientRect();
-      return flags.some(flag => {
-        const bounds = flag.getBoundingClientRect();
-        const centerX = bounds.left + bounds.width / 2;
-        const centerY = bounds.top + bounds.height / 2;
-        return centerX >= targetBounds.left && centerX <= targetBounds.right && centerY >= targetBounds.top && centerY <= targetBounds.bottom;
-      });
-    }).length;
-    config.onSubmit(correctCount, targets);
+    const result = scoreFlagPlacements(targets.map(target => target.getBoundingClientRect()), flags.map(flag => flag.getBoundingClientRect()));
+    config.onSubmit(result);
   });
   content.appendChild(reportButton);
 
@@ -193,8 +174,11 @@ function addFlagTools(content, config){
       top: `${sourceBounds.top - contentBounds.top}px`
     });
 
+    let placed = false, dragging = false;
     const startDrag = event => {
-      if(event.button !== 0) return;
+      if(event.button !== 0 || dragging) return;
+      dragging = true;
+      const originalPosition = { left: flag.style.left, top: flag.style.top };
       event.preventDefault();
       const bounds = content.getBoundingClientRect();
       const moveFlag = moveEvent => {
@@ -206,16 +190,19 @@ function addFlagTools(content, config){
       flag.setPointerCapture(event.pointerId);
       flag.addEventListener('pointermove', moveFlag);
       const cleanup = () => {
+        dragging = false;
         flag.removeEventListener('pointermove', moveFlag);
         flag.removeEventListener('pointerup', finishDrag);
         flag.removeEventListener('pointercancel', cancelDrag);
       };
       const cancelDrag = () => {
         cleanup();
-        if(initialEvent) flag.remove();
+        if(!placed) flag.remove();
+        else Object.assign(flag.style, originalPosition);
       };
       const finishDrag = () => {
         cleanup();
+        placed = true;
         const flagBounds = flag.getBoundingClientRect();
         const trashBounds = trash.getBoundingClientRect();
         const overlapsTrash = flagBounds.left < trashBounds.right && flagBounds.right > trashBounds.left && flagBounds.top < trashBounds.bottom && flagBounds.bottom > trashBounds.top;
@@ -305,18 +292,7 @@ function renderDiscord(data){
         trashPos: { left: '17%', top: '70%' },
         reportPos: { left: '7%', top: '76%' },
         reportClass: 'discord-report-button',
-        onSubmit: (correctCount, targets) => {
-          const flags = Array.from(stage.querySelectorAll('.discord-draggable-flag'));
-          const allFlagsCorrect = flags.every(flag => {
-            const rect = flag.getBoundingClientRect();
-            return targets.some(target => {
-              const box = target.getBoundingClientRect();
-              const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
-              return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
-            });
-          });
-          showDiscordCommunityResult(community, correctCount === targets.length && allFlagsCorrect);
-        }
+        onSubmit: result => showDiscordCommunityResult(community, result.success)
       });
       views.set(key, stage);
     }
@@ -374,17 +350,7 @@ function renderSms(data){
         trashPos: { left: '80%', top: '51%' },
         reportPos: { left: '68%', top: '60%' },
         reportClass: 'discord-report-button',
-        onSubmit: (correctCount, targets) => {
-          const incorrectFlags = Array.from(stage.querySelectorAll('.discord-draggable-flag')).filter(flag => {
-            const rect = flag.getBoundingClientRect();
-            const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
-            return !targets.some(target => {
-              const box = target.getBoundingClientRect();
-              return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
-            });
-          }).length;
-          showSmsResult(conversation, correctCount, targets.length, incorrectFlags);
-        }
+        onSubmit: result => showSmsResult(conversation, result.correctCount, result.total, result.incorrectCount)
       });
       views.set(index, stage);
     }
@@ -412,48 +378,33 @@ function renderOutlook(data){
 }
 
 function createOutlookEmail(data, index, total, showEmail){
-  const content = document.getElementById('app-content');
-  content.classList.add('bg-outlook-exercise');
   const stage = document.createElement('section');
   stage.className = 'outlook-exercise-stage';
   stage.setAttribute('aria-label', 'Courriel Outlook à analyser');
-  stage.innerHTML = `<header class="outlook-exercise-header"><span>▦ &nbsp; Outlook</span><nav class="outlook-email-navigation" aria-label="Navigation entre les courriels"><span aria-live="polite">${index + 1} / ${total}</span><button type="button" class="outlook-email-previous" aria-label="Courriel précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="outlook-email-next" aria-label="Courriel suivant" ${index === total - 1 ? 'disabled' : ''}>→</button></nav></header><div class="outlook-exercise-toolbar">Supprimer &nbsp; | &nbsp; Archiver &nbsp; | &nbsp; Signaler &nbsp; | &nbsp; Répondre &nbsp; | &nbsp; Transférer</div><h1 class="outlook-clue">${escapeHtml(data.subject)}${data.onlyActionClue ? '' : '<span class="discord-phishing-target"></span>'}</h1><div class="outlook-exercise-mail"><div class="outlook-sender-row">${data.logo ? `<img class="outlook-sender-logo" src="${escapeHtml(data.logo)}" alt="${escapeHtml(data.logoAlt)}" width="44" height="44">` : `<span class="outlook-sender-avatar" aria-hidden="true">${escapeHtml(data.initials || data.senderName.charAt(0))}</span>`}<div class="outlook-exercise-sender outlook-clue"><strong>${escapeHtml(data.senderName)}</strong><br>&lt;${escapeHtml(data.sender)}&gt;${data.onlyActionClue ? '' : '<div class="discord-phishing-target"></div>'}</div></div><p>À : Vous</p><p>${escapeHtml(data.greeting || 'Bonjour,')}</p><p${data.clueField === 'intro' ? ' class="outlook-clue"' : ''}>${escapeHtml(data.intro).replace(/100 \$/g, '<strong>100 $</strong>')}${data.clueField === 'intro' ? '<span class="discord-phishing-target"></span>' : ''}</p>${data.threat ? `<p class="outlook-clue outlook-exercise-threat">${escapeHtml(data.threat).replace(/\bimmédiatement\b/g, '<strong><u>immédiatement</u></strong>')}${data.actionPrompt ? ` ${escapeHtml(data.actionPrompt)}` : ''}<span class="discord-phishing-target"></span></p>` : ''}${!data.threat && data.actionPrompt ? `<p>${escapeHtml(data.actionPrompt)}</p>` : ''}${data.href ? `<div class="outlook-exercise-action outlook-clue"><button type="button" class="outlook-inspect-link" aria-expanded="false" aria-controls="outlook-link-destination">${escapeHtml(data.buttonText)}</button><div class="outlook-link-destination" id="outlook-link-destination" hidden>${escapeHtml(data.href)}</div><span class="discord-phishing-target"></span></div>` : `<p class="outlook-clue">${escapeHtml(data.actionText)}<span class="discord-phishing-target"></span></p>`}${data.closing ? `<p>${escapeHtml(data.closing)}</p>` : ''}${data.supportNote ? `<p>${escapeHtml(data.supportNote)}</p>` : ''}${data.officialUrl ? `<p>${data.contact ? `Pour toute question : <span class="outlook-official-url">${escapeHtml(data.contact)}</span><br>Ce message a été généré par ` : escapeHtml(data.officialLabel || 'Support officiel : ')}<span class="outlook-official-url">${escapeHtml(data.officialUrl)}</span>.</p>` : ''}${data.signature ? `<p>${escapeHtml(data.signature)}</p>` : ''}</div><aside class="outlook-exercise-help">Faites glisser un drapeau sur chaque indice suspect et valider en appuyant sur le bouton.</aside>`;
+  stage.innerHTML = `<header class="outlook-exercise-header"><span>▦ &nbsp; Outlook</span><nav class="outlook-email-navigation" aria-label="Navigation entre les courriels"><span aria-live="polite">${index + 1} / ${total}</span><button type="button" class="outlook-email-previous" aria-label="Courriel précédent" ${index === 0 ? 'disabled' : ''}>←</button><button type="button" class="outlook-email-next" aria-label="Courriel suivant" ${index === total - 1 ? 'disabled' : ''}>→</button></nav></header><div class="outlook-exercise-toolbar">Supprimer &nbsp; | &nbsp; Archiver &nbsp; | &nbsp; Signaler &nbsp; | &nbsp; Répondre &nbsp; | &nbsp; Transférer</div><h1 class="outlook-clue">${escapeHtml(data.subject)}<span class="discord-phishing-target"></span></h1><div class="outlook-exercise-mail"><div class="outlook-sender-row"><img class="outlook-sender-logo" src="${escapeHtml(data.logo)}" alt="${escapeHtml(data.logoAlt)}" width="44" height="44"><div class="outlook-exercise-sender outlook-clue"><strong>${escapeHtml(data.senderName)}</strong><br>&lt;${escapeHtml(data.sender)}&gt;<div class="discord-phishing-target"></div></div></div><p>À : Vous</p><p>${escapeHtml(data.greeting || 'Bonjour,')}</p><p${data.clueField === 'intro' ? ' class="outlook-clue"' : ''}>${escapeHtml(data.intro).replace(/100 \$/g, '<strong>100 $</strong>')}${data.clueField === 'intro' ? '<span class="discord-phishing-target"></span>' : ''}</p>${data.threat ? `<p class="outlook-clue outlook-exercise-threat">${escapeHtml(data.threat).replace(/\bimmédiatement\b/g, '<strong><u>immédiatement</u></strong>')}${data.actionPrompt ? ` ${escapeHtml(data.actionPrompt)}` : ''}<span class="discord-phishing-target"></span></p>` : ''}${!data.threat && data.actionPrompt ? `<p>${escapeHtml(data.actionPrompt)}</p>` : ''}<div class="outlook-exercise-action outlook-clue"><button type="button" class="outlook-inspect-link" aria-expanded="false" aria-controls="outlook-link-destination">${escapeHtml(data.buttonText)}</button><div class="outlook-link-destination" id="outlook-link-destination" hidden>${escapeHtml(data.href)}</div><span class="discord-phishing-target"></span></div>${data.closing ? `<p>${escapeHtml(data.closing)}</p>` : ''}${data.supportNote ? `<p>${escapeHtml(data.supportNote)}</p>` : ''}${data.officialUrl ? `<p>${data.contact ? `Pour toute question : <span class="outlook-official-url">${escapeHtml(data.contact)}</span><br>Ce message a été généré par ` : escapeHtml(data.officialLabel || 'Support officiel : ')}<span class="outlook-official-url">${escapeHtml(data.officialUrl)}</span>.</p>` : ''}${data.signature ? `<p>${escapeHtml(data.signature)}</p>` : ''}</div><aside class="outlook-exercise-help">Faites glisser un drapeau sur chaque indice suspect et valider en appuyant sur le bouton.</aside>`;
   stage.querySelector('.outlook-email-previous').addEventListener('click', () => showEmail(index - 1));
   stage.querySelector('.outlook-email-next').addEventListener('click', () => showEmail(index + 1));
   stage.querySelectorAll('.outlook-clue .discord-phishing-target').forEach(target => {
     Object.assign(target.style, { inset: '0' });
   });
-  if(data.href){
-    const inspect = stage.querySelector('.outlook-inspect-link');
-    const destination = stage.querySelector('.outlook-link-destination');
-    let hovering = false;
-    const updateDestination = () => {
-      const visible = hovering || inspect.matches(':focus-visible');
-      destination.hidden = !visible;
-      inspect.setAttribute('aria-expanded', String(visible));
-    };
-    inspect.addEventListener('pointerenter', () => { hovering = true; updateDestination(); });
-    inspect.addEventListener('pointerleave', () => { hovering = false; updateDestination(); });
-    inspect.addEventListener('focus', updateDestination);
-    inspect.addEventListener('blur', updateDestination);
-  }
+  const inspect = stage.querySelector('.outlook-inspect-link');
+  const destination = stage.querySelector('.outlook-link-destination');
+  let hovering = false;
+  const updateDestination = () => {
+    const visible = hovering || inspect.matches(':focus-visible');
+    destination.hidden = !visible;
+    inspect.setAttribute('aria-expanded', String(visible));
+  };
+  inspect.addEventListener('pointerenter', () => { hovering = true; updateDestination(); });
+  inspect.addEventListener('pointerleave', () => { hovering = false; updateDestination(); });
+  inspect.addEventListener('focus', updateDestination);
+  inspect.addEventListener('blur', updateDestination);
   addFlagTools(stage, {
     sourcePos: { right: '18%', top: '50%' },
     trashPos: { right: '7%', top: '50%' },
     reportPos: { right: '9%', top: '57%' },
     reportClass: 'discord-report-button',
-    onSubmit: (correctCount, targets) => {
-      const flags = Array.from(stage.querySelectorAll('.discord-draggable-flag'));
-      const incorrectFlags = flags.filter(flag => {
-        const rect = flag.getBoundingClientRect();
-        const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
-        return !targets.some(target => {
-          const box = target.getBoundingClientRect();
-          return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
-        });
-      }).length;
-      showOutlookSuccessAlert(correctCount, targets.length, incorrectFlags, data);
-    }
+    onSubmit: result => showOutlookSuccessAlert(result.correctCount, result.total, result.incorrectCount, data)
   });
   return stage;
 }
@@ -472,37 +423,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
       // Copy the selected game’s fixed message order from messages.json.
       const messagesArr = (data && data.games && data.games[app]) ? [...data.games[app]] : [];
 
-      function buildChatHtml(messagesArr){
-        let html = '<div style="position:relative;width:100%;height:100%"><div class="mc-chat" role="log" aria-label="'+title+' chat" tabindex="0">';
-        messagesArr.forEach((m, idx)=>{
-          const namePrefix = isFortnite ? 'ft-' : 'mc-';
-          // Build the visible text while avoiding duplicate link text: if the message text
-          // already contains the hrefText, replace that substring with a span. Otherwise
-          // append the span after the text. This ensures a single visible occurrence.
-          let displayText = m.text || '';
-          if(m.href){
-            const hrefText = m.hrefText || m.href;
-            if(displayText.includes(hrefText)){
-              displayText = displayText.replace(hrefText, '<span class="mc-discord-text" data-href="'+m.href+'">'+hrefText+'</span>');
-            } else {
-              displayText = displayText + ' <span class="mc-discord-text" data-href="'+m.href+'">'+hrefText+'</span>';
-            }
-          }
-
-          html += '<div class="mc-message" data-phishing="'+(m.phishing ? 1 : 0)+'">';
-          html += '<div class="mc-left"><span class="user">'+(m.user||'')+'</span> <span class="text">'+displayText+'</span></div>';
-          html += '<div class="mc-right">';
-          html += '<div class="mc-ask">QUEL TYPE DE MESSAGE ?</div>';
-          html += '<label class="mc-yes"><input type="radio" name="'+namePrefix+'type-'+idx+'" value="normal"><span class="mc-emoji">✅</span><span class="mc-label">Normal</span></label>';
-          html += '<label class="mc-no"><input type="radio" name="'+namePrefix+'type-'+idx+'" value="phishing"><span class="mc-emoji">❌</span><span class="mc-label">Hameçonnage</span></label>';
-          html += '</div></div>';
-        });
-        html += '<button type="button" class="mc-send-btn" id="mc-send-btn" disabled>Valider</button>';
-        html += '</div></div>';
-        return html;
-      }
-
-      const chatHtml = buildChatHtml(messagesArr);
+      const chatHtml = buildGameChatHtml(title, messagesArr);
       openAppWindow(title, chatHtml);
       const content = document.getElementById('app-content');
       content.classList.add(bgClass);
@@ -513,7 +434,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
           const href = s.getAttribute('data-href');
           const a = document.createElement('a');
           a.className = 'mc-discord-link';
-          a.href = 'blank.html';
+          a.href = '#';
           a.setAttribute('data-real-href', href);
           a.textContent = s.textContent;
           s.parentNode.replaceChild(a, s);
@@ -561,7 +482,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
         if(chat){
           const updateSendButton = () => {
             const messages = Array.from(chat.querySelectorAll('.mc-message'));
-            sendBtn.disabled = messages.length === 0 || messages.some(message => !message.querySelector('input[type="radio"]:checked'));
+            sendBtn.disabled = !evaluateChatAnswers(messagesArr, messages.map(message => message.querySelector('input[type="radio"]:checked')?.value)).complete;
           };
           chat.addEventListener('change', updateSendButton);
           updateSendButton();

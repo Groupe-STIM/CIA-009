@@ -7,7 +7,7 @@ const callbacks = [];
 const context = { URL, window: { addEventListener: (type, callback) => callbacks.push(callback) } };
 vm.createContext(context);
 for (const file of ['js/public-suffix-list.js', 'js/url-guide.js']) {
-  vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: path.join(root, file) });
 }
 const parse = context.analyzeLearningUrl;
 const cases = [
@@ -82,7 +82,7 @@ function element(){
     querySelectorAll(){return [];}
   };
 }
-const ids = Object.fromEntries(['official-domains-button','official-domains-dialog','official-domains-close','url-quiz-button','url-guide-button','url-guide-dialog','url-guide-close','url-analyzer-input','url-analyzer-result','url-analyzer-form'].map(id=>[id,element()]));
+const ids = Object.fromEntries(['app-official-domains-button','official-domains-button','official-domains-dialog','official-domains-close','url-quiz-button','url-guide-button','url-guide-dialog','url-guide-close','url-analyzer-input','url-analyzer-result','url-analyzer-form'].map(id=>[id,element()]));
 ids['url-analyzer-result'].replaceChildren=function(){this.innerHTML='';};
 ids['url-analyzer-result'].appendChild=function(el){this.message=el.textContent;};
 const example = element(); example.dataset.urlExample='https://shop.exemple.co.uk/';
@@ -92,6 +92,7 @@ context.document = {getElementById:id=>ids[id], createElement:()=>element()};
 callbacks[0]();
 ids['official-domains-button'].events.click();assert(ids['official-domains-dialog'].open);
 ids['official-domains-close'].events.click();assert(!ids['official-domains-dialog'].open);assert(ids['official-domains-button'].focused);
+ids['app-official-domains-button'].events.click();assert(ids['official-domains-dialog'].open);ids['official-domains-close'].events.click();assert(ids['app-official-domains-button'].focused);
 ids['official-domains-button'].events.click();
 ids['official-domains-dialog'].events.click({target:ids['official-domains-dialog'],clientX:200,clientY:200});assert(!ids['official-domains-dialog'].open);
 ids['url-guide-button'].events.click(); assert(ids['url-guide-dialog'].open);
@@ -105,7 +106,7 @@ const classes=new Set(['bg-sms']);
 const appContent={classList:{[Symbol.iterator]:()=>classes[Symbol.iterator](),remove:name=>classes.delete(name)},style:{},focus(){}};
 const title=element();
 context.document.getElementById=id=>id==='app-window'?appWindow:id==='app-content'?appContent:id==='app-title'?title:ids[id];
-vm.runInContext(fs.readFileSync(path.join(root,'js/ui.js'),'utf8'),context);
-context.openAppWindow('SMS','<div></div>');assert.equal(ids['url-guide-button'].hidden,true);assert.equal(ids['official-domains-button'].hidden,false);
+vm.runInContext(fs.readFileSync(path.join(root,'js/ui.js'),'utf8'),context,{filename:path.join(root,'js/ui.js')});
+context.openAppWindow('SMS','<div></div>');assert.equal(ids['url-guide-button'].hidden,true);assert.equal(ids['official-domains-button'].hidden,true);
 context.closeAppWindow();assert.equal(ids['url-guide-button'].hidden,false);assert.equal(ids['official-domains-button'].hidden,false);
 console.log('URL guide: modal open/close, backdrop, examples and desktop-only visibility passed.');
